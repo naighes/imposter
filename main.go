@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 // FEATURES
 // [BIG] generate from swagger
+//    - random result based on schema?
 // [BIG] record all requests
 
 type Args struct {
@@ -44,6 +46,12 @@ func main() {
 		os.Exit(1)
 	}
 	j := []byte(`[{"pattern": "^/myfile$", "response": {"body": "${file(./main.go)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[a-z]+$", "response": {"body": "${text(Hello, string!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[0-9]+$", "response": {"body": "Hello, number!", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 404}}]`)
+	var r []*MatchDef
+	err = json.Unmarshal(j, &r)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 	defs, err := ParseMatchDef(j)
 	if err != nil {
 		fmt.Printf("could not parse configuration: %v\n", err)

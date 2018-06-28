@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type RegexHandler struct {
@@ -25,7 +27,7 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *RegexHandler) handleFunc(pattern *regexp.Regexp, h func(http.ResponseWriter, *http.Request)) {
+func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, h func(http.ResponseWriter, *http.Request)) {
 	handler.routes = append(handler.routes, &regexRoute{pattern, http.HandlerFunc(h)})
 }
 
@@ -36,19 +38,38 @@ func NewRegexHandler(defs []*MatchDef) (*RegexHandler, error) {
 		if err != nil {
 			return nil, err
 		}
-		def := def
-		// NOTE: should we manage the whole handler in a lazy manner?
-		body, err := def.Response.ParseBody()
+		f, err := HandleFunc(def.Response)
 		if err != nil {
 			return nil, err
 		}
-		r.handleFunc(reg, func(w http.ResponseWriter, r *http.Request) {
-			for k, v := range def.Response.Headers {
-				w.Header().Set(k, v.(string))
-			}
-			w.WriteHeader(def.Response.StatusCode)
-			fmt.Fprintln(w, body)
-		})
+		r.addRoute(reg, f)
 	}
 	return &r, nil
+}
+
+func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error) {
+	parseDef := func(rsp *MatchRsp) func(http.ResponseWriter, *http.Request) {
+		parseBody := rsp.ParseBody()
+		return func(w http.ResponseWriter, r *http.Request) {
+			body, err := parseBody()
+			if err != nil {
+				w.WriteHeader(500)
+				fmt.Fprintln(w, err)
+				return
+			}
+			w.WriteHeader(rsp.StatusCode)
+			for k, v := range rsp.Headers {
+				w.Header().Set(k, v.(string))
+			}
+			fmt.Fprintln(w, body)
+		}
+	}
+	var rsp MatchRsp
+	err := mapstructure.Decode(o, &rsp)
+	if err != nil {
+		// TODO: check for "link"
+		return func(w http.ResponseWriter, r *http.Request) {
+		}, nil
+	}
+	return parseDef(&rsp), nil
 }
