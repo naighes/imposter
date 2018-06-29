@@ -32,5 +32,12 @@
       },
       "status_code": 404
     }
+  },
+  {
+    "pattern": "^.*$",
+    "response": {
+      "body": "${text(Hello, default body!)}",
+      "status_code": 200
+    }
   }
 ]

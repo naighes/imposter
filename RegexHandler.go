@@ -66,8 +66,10 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 				return
 			}
 			w.WriteHeader(rsp.StatusCode)
-			for k, v := range rsp.Headers {
-				w.Header().Set(k, v.(string))
+			if rsp.Headers != nil {
+				for k, v := range rsp.Headers {
+					w.Header().Set(k, v.(string))
+				}
 			}
 			fmt.Fprintln(w, body)
 		}
