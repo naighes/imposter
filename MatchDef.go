@@ -6,6 +6,10 @@ import (
 	"io/ioutil"
 )
 
+type Config struct {
+	Defs []*MatchDef `json:"pattern_list"`
+}
+
 type MatchDef struct {
 	Pattern  string      `json:"pattern"`
 	Response interface{} `json:"response"`
@@ -17,8 +21,8 @@ type MatchRsp struct {
 	StatusCode int                    `json:"status_code"`
 }
 
-func ParseMatchDef(j []byte) ([]*MatchDef, error) {
-	var r []*MatchDef
+func ParseConfig(j []byte) (*Config, error) {
+	var r *Config
 	err := json.Unmarshal(j, &r)
 	if err != nil {
 		return nil, err

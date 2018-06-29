@@ -47,16 +47,16 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	config, err := ioutil.ReadFile(args.configFile)
+	rawConfig, err := ioutil.ReadFile(args.configFile)
 	if err != nil {
-		config = []byte("[]")
+		rawConfig = []byte("{}")
 	}
-	defs, err := ParseMatchDef(config)
+	config, err := ParseConfig(rawConfig)
 	if err != nil {
 		fmt.Printf("could not parse configuration: %v\n", err)
 		os.Exit(1)
 	}
-	router, err := NewRegexHandler(defs)
+	router, err := NewRegexHandler(config)
 	if err != nil {
 		fmt.Printf("could not load configuration: %v\n", err)
 		os.Exit(1)

@@ -34,8 +34,9 @@ func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, h func(http.Respon
 	handler.routes = append(handler.routes, &regexRoute{pattern, http.HandlerFunc(h)})
 }
 
-func NewRegexHandler(defs []*MatchDef) (*RegexHandler, error) {
+func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	r := RegexHandler{}
+	defs := config.Defs
 	for _, def := range defs {
 		reg, err := regexp.Compile(def.Pattern)
 		if err != nil {
