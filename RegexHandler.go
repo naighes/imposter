@@ -5,7 +5,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
-	"strings"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -51,14 +50,19 @@ func NewRegexHandler(defs []*MatchDef) (*RegexHandler, error) {
 	return &r, nil
 }
 
+func writeError(w http.ResponseWriter, err error) {
+	w.WriteHeader(500)
+	w.Header().Set("Content-Type", "text/plain charset=utf-8")
+	fmt.Fprintln(w, err)
+}
+
 func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error) {
 	parseDef := func(rsp *MatchRsp) func(http.ResponseWriter, *http.Request) {
 		parseBody := rsp.ParseBody()
 		return func(w http.ResponseWriter, r *http.Request) {
 			body, err := parseBody()
 			if err != nil {
-				w.WriteHeader(500)
-				fmt.Fprintln(w, err)
+				writeError(w, err)
 				return
 			}
 			w.WriteHeader(rsp.StatusCode)
@@ -69,41 +73,22 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 		}
 	}
 	parseFunc := func(str string) (func(http.ResponseWriter, *http.Request), error) {
-		start := strings.Index(str, "${")
-		if start != 0 {
-			return nil, fmt.Errorf("unexpected token '%c' at position '0': expected '${'", str[1])
+		name, arg, err := ParseFunc(str)
+		if err != nil {
+			return nil, err
 		}
-		end := len(str) - 1
-		if str[end] != '}' {
-			return nil, fmt.Errorf("unexpected token '%c' at position '%d': expected '}'", str[end], end)
-		}
-		rest := str[2:end]
-		start = strings.Index(rest, "(")
-		if start <= 0 {
-			return nil, fmt.Errorf("expected token '('")
-		}
-		name := rest[0:start]
-		end = len(rest) - 1
-		if rest[end] != ')' {
-			return nil, fmt.Errorf("unexpected token '%c' at position '%d': expected ')'", rest[end], end)
-		}
-		arg := rest[start+1 : end]
 		switch name {
 		case "link":
 			return func(w http.ResponseWriter, r *http.Request) {
 				rsp, err := http.Get(arg)
 				if err != nil {
-					// TODO: must be tested when 500
-					w.WriteHeader(500)
-					fmt.Fprintln(w, err)
+					writeError(w, err)
 					return
 				}
 				defer rsp.Body.Close()
 				body, err := ioutil.ReadAll(rsp.Body)
 				if err != nil {
-					// TODO: must be tested when 500
-					w.WriteHeader(500)
-					fmt.Fprintln(w, err)
+					writeError(w, err)
 					return
 				}
 				w.WriteHeader(rsp.StatusCode)
@@ -125,7 +110,5 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 	if ok {
 		return parseFunc(str)
 	}
-	// TODO: check for "link"
-	return func(w http.ResponseWriter, r *http.Request) {
-	}, nil
+	return nil, fmt.Errorf("operation is not supported")
 }

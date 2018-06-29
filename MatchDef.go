@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"strings"
 )
 
 type MatchDef struct {
@@ -30,37 +29,21 @@ func ParseMatchDef(j []byte) ([]*MatchDef, error) {
 func (rsp *MatchRsp) ParseBody() func() (string, error) {
 	body := rsp.Body
 	return func() (string, error) {
-		start := strings.Index(body, "${")
-		if start == 0 {
-			end := len(body) - 1
-			if body[end] != '}' {
-				return "", fmt.Errorf("unexpected token '%c' at position '%d': expected '}'", body[end], end)
-			}
-			rest := body[2:end]
-			start = strings.Index(rest, "(")
-			if start <= 0 {
-				return "", fmt.Errorf("expected token '('")
-			}
-			name := rest[0:start]
-			end = len(rest) - 1
-			if rest[end] != ')' {
-				return "", fmt.Errorf("unexpected token '%c' at position '%d': expected ')'", rest[end], end)
-			}
-			arg := rest[start+1 : end]
-			switch name {
-			case "text":
-				return arg, nil
-			case "file":
-				content, err := ioutil.ReadFile(arg)
-				if err != nil {
-					return "", err
-				}
-				return string(content), nil
-			default:
-				return "", fmt.Errorf("function '%s' is not supported", name)
-			}
-			return arg, nil
+		name, arg, err := ParseFunc(body)
+		if err != nil {
+			return "", err
 		}
-		return body, nil
+		switch name {
+		case "text":
+			return arg, nil
+		case "file":
+			content, err := ioutil.ReadFile(arg)
+			if err != nil {
+				return "", err
+			}
+			return string(content), nil
+		default:
+			return "", fmt.Errorf("function '%s' is not supported", name)
+		}
 	}
 }

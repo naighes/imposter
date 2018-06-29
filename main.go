@@ -40,7 +40,7 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	j := []byte(fmt.Sprintf(`[{"pattern": "^/mylink$", "response": "${link(http://localhost:%d/aaa)}"}, {"pattern": "^/myfile$", "response": {"body": "${file(./main.go)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[a-z]+$", "response": {"body": "${text(Hello, string!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[0-9]+$", "response": {"body": "Hello, number!", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 404}}]`, args.port))
+	j := []byte(fmt.Sprintf(`[{"pattern": "^/mylink$", "response": "${link(http://localhost:%d/aaa)}"}, {"pattern": "^/myfile$", "response": {"body": "${file(./main.go)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[a-z]+$", "response": {"body": "${text(Hello, string!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[0-9]+$", "response": {"body": "${text(Hello, number!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 404}}]`, args.port))
 	var r []*MatchDef
 	err = json.Unmarshal(j, &r)
 	if err != nil {
