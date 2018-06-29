@@ -1,15 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
 )
 
 type Args struct {
-	port int
+	port       int
+	configFile string
 }
 
 func ParseArgs(args []string) (*Args, error) {
@@ -22,11 +23,17 @@ func ParseArgs(args []string) (*Args, error) {
 			if len(args)-1 < i {
 				return nil, fmt.Errorf("expected value for token '%s'", arg)
 			}
-			p, err := strconv.Atoi(args[i])
-			(&r).port = p
+			v, err := strconv.Atoi(args[i])
+			(&r).port = v
 			if err != nil {
 				return nil, fmt.Errorf("unexpected value for token '%s': expected 'int'", arg)
 			}
+		case "--config-file":
+			i = i + 1
+			if len(args)-1 < i {
+				return nil, fmt.Errorf("expected value for token '%s'", arg)
+			}
+			(&r).configFile = args[i]
 		default:
 			return nil, fmt.Errorf("flag '%s'is not recognized", arg)
 		}
@@ -40,14 +47,11 @@ func main() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	j := []byte(fmt.Sprintf(`[{"pattern": "^/mylink$", "response": "${link(http://localhost:%d/aaa)}"}, {"pattern": "^/myfile$", "response": {"body": "${file(./main.go)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[a-z]+$", "response": {"body": "${text(Hello, string!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 200}}, {"pattern": "^/[0-9]+$", "response": {"body": "${text(Hello, number!)}", "headers": {"Content-Type": "text/plain; charset=utf-8"}, "status_code": 404}}]`, args.port))
-	var r []*MatchDef
-	err = json.Unmarshal(j, &r)
+	config, err := ioutil.ReadFile(args.configFile)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		config = []byte("[]")
 	}
-	defs, err := ParseMatchDef(j)
+	defs, err := ParseMatchDef(config)
 	if err != nil {
 		fmt.Printf("could not parse configuration: %v\n", err)
 		os.Exit(1)
