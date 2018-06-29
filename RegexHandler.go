@@ -99,6 +99,11 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 				}
 				fmt.Fprintln(w, string(body))
 			}, nil
+		case "redirect":
+			return func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Location", arg)
+				w.WriteHeader(301)
+			}, nil
 		default:
 			return nil, fmt.Errorf("function '%s' is not supported", name)
 		}
