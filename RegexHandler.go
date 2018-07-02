@@ -126,9 +126,16 @@ func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter
 func enrichHeaders(f func(http.ResponseWriter, *http.Request), options *ConfigOptions) func(http.ResponseWriter, *http.Request) {
 	o := options
 	return func(w http.ResponseWriter, r *http.Request) {
-		if o.Cors {
-			w.Header().Set("Access-Control-Allow-Origin", "*")
-		}
+		setCorsHeaders(w, o)
 		f(w, r)
+	}
+}
+
+func setCorsHeaders(w http.ResponseWriter, options *ConfigOptions) {
+	// NOTE: preflighted requests are not handled: we may came back on this in future
+	if options.Cors {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
 	}
 }
