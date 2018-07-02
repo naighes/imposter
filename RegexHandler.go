@@ -46,70 +46,71 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if err != nil {
 			return nil, err
 		}
-		r.addRoute(reg, f)
+		r.addRoute(reg, enrichHeaders(f, config.Options))
 	}
 	return &r, nil
 }
 
 func writeError(w http.ResponseWriter, err error) {
-	w.WriteHeader(500)
 	w.Header().Set("Content-Type", "text/plain charset=utf-8")
-	fmt.Fprintln(w, err)
+	w.WriteHeader(500)
+	fmt.Fprintf(w, err.Error())
 }
 
-func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter, *http.Request), error) {
-	parseDef := func(rsp *MatchRsp) func(http.ResponseWriter, *http.Request) {
-		parseBody := rsp.ParseBody()
+func parseDef(rsp *MatchRsp) func(http.ResponseWriter, *http.Request) {
+	parseBody := rsp.ParseBody()
+	return func(w http.ResponseWriter, r *http.Request) {
+		body, err := parseBody()
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		if rsp.Headers != nil {
+			for k, v := range rsp.Headers {
+				w.Header().Set(k, v.(string))
+			}
+		}
+		w.WriteHeader(rsp.StatusCode)
+		fmt.Fprintf(w, body)
+	}
+}
+
+func parseFunc(str string) (func(http.ResponseWriter, *http.Request), error) {
+	name, arg, err := ParseFunc(str)
+	if err != nil {
+		return nil, err
+	}
+	switch name {
+	case "link":
 		return func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(rsp.StatusCode)
-			body, err := parseBody()
+			rsp, err := http.Get(arg)
+			defer rsp.Body.Close()
 			if err != nil {
 				writeError(w, err)
 				return
 			}
-			if rsp.Headers != nil {
-				for k, v := range rsp.Headers {
-					fmt.Printf("%s: %s\n", k, v)
-					w.Header().Set(k, v.(string))
-				}
+			body, err := ioutil.ReadAll(rsp.Body)
+			if err != nil {
+				writeError(w, err)
+				return
 			}
-			fmt.Fprintln(w, body)
-		}
+			for k, _ := range rsp.Header {
+				w.Header().Set(k, rsp.Header.Get(k))
+			}
+			w.WriteHeader(rsp.StatusCode)
+			fmt.Fprintf(w, string(body))
+		}, nil
+	case "redirect":
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Location", arg)
+			w.WriteHeader(301)
+		}, nil
+	default:
+		return nil, fmt.Errorf("function '%s' is not supported", name)
 	}
-	parseFunc := func(str string) (func(http.ResponseWriter, *http.Request), error) {
-		name, arg, err := ParseFunc(str)
-		if err != nil {
-			return nil, err
-		}
-		switch name {
-		case "link":
-			return func(w http.ResponseWriter, r *http.Request) {
-				rsp, err := http.Get(arg)
-				if err != nil {
-					writeError(w, err)
-					return
-				}
-				defer rsp.Body.Close()
-				body, err := ioutil.ReadAll(rsp.Body)
-				if err != nil {
-					writeError(w, err)
-					return
-				}
-				w.WriteHeader(rsp.StatusCode)
-				for k, _ := range rsp.Header {
-					w.Header().Set(k, rsp.Header.Get(k))
-				}
-				fmt.Fprintln(w, string(body))
-			}, nil
-		case "redirect":
-			return func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(301)
-				w.Header().Set("Location", arg)
-			}, nil
-		default:
-			return nil, fmt.Errorf("function '%s' is not supported", name)
-		}
-	}
+}
+
+func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter, *http.Request), error) {
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
@@ -117,17 +118,17 @@ func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter
 	}
 	str, ok := o.(string)
 	if ok {
-		return enrichHeaders(parseFunc(str))
+		return parseFunc(str)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }
 
-func enrichHeaders(f func(http.ResponseWriter, *http.Request), err error) (func(http.ResponseWriter, *http.Request), error) {
-	if err != nil {
-		return nil, err
-	}
+func enrichHeaders(f func(http.ResponseWriter, *http.Request), options *ConfigOptions) func(http.ResponseWriter, *http.Request) {
+	o := options
 	return func(w http.ResponseWriter, r *http.Request) {
+		if o.Cors {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
 		f(w, r)
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-	}, nil
+	}
 }

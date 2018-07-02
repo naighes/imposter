@@ -21,9 +21,9 @@ type MatchDef struct {
 }
 
 type MatchRsp struct {
-	Body       string                 `json:"body"`
-	Headers    map[string]interface{} `json:"headers"`
-	StatusCode int                    `json:"status_code"`
+	Body       string                 `mapstructure:"body"`
+	Headers    map[string]interface{} `mapstructure:"headers"`
+	StatusCode int                    `mapstructure:"status_code"`
 }
 
 func ParseConfig(j []byte) (*Config, error) {
