@@ -7,7 +7,12 @@ import (
 )
 
 type Config struct {
-	Defs []*MatchDef `json:"pattern_list"`
+	Options *ConfigOptions `json:"options"`
+	Defs    []*MatchDef    `json:"pattern_list"`
+}
+
+type ConfigOptions struct {
+	Cors bool `json:"enable_cors"`
 }
 
 type MatchDef struct {

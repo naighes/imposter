@@ -42,7 +42,7 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if err != nil {
 			return nil, err
 		}
-		f, err := HandleFunc(def.Response)
+		f, err := HandleFunc(def.Response, config.Options)
 		if err != nil {
 			return nil, err
 		}
@@ -57,18 +57,19 @@ func writeError(w http.ResponseWriter, err error) {
 	fmt.Fprintln(w, err)
 }
 
-func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error) {
+func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter, *http.Request), error) {
 	parseDef := func(rsp *MatchRsp) func(http.ResponseWriter, *http.Request) {
 		parseBody := rsp.ParseBody()
 		return func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(rsp.StatusCode)
 			body, err := parseBody()
 			if err != nil {
 				writeError(w, err)
 				return
 			}
-			w.WriteHeader(rsp.StatusCode)
 			if rsp.Headers != nil {
 				for k, v := range rsp.Headers {
+					fmt.Printf("%s: %s\n", k, v)
 					w.Header().Set(k, v.(string))
 				}
 			}
@@ -102,8 +103,8 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 			}, nil
 		case "redirect":
 			return func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Location", arg)
 				w.WriteHeader(301)
+				w.Header().Set("Location", arg)
 			}, nil
 		default:
 			return nil, fmt.Errorf("function '%s' is not supported", name)
@@ -116,7 +117,17 @@ func HandleFunc(o interface{}) (func(http.ResponseWriter, *http.Request), error)
 	}
 	str, ok := o.(string)
 	if ok {
-		return parseFunc(str)
+		return enrichHeaders(parseFunc(str))
 	}
 	return nil, fmt.Errorf("operation is not supported")
+}
+
+func enrichHeaders(f func(http.ResponseWriter, *http.Request), err error) (func(http.ResponseWriter, *http.Request), error) {
+	if err != nil {
+		return nil, err
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		f(w, r)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+	}, nil
 }
