@@ -37,16 +37,22 @@ func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, h func(http.Respon
 func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	r := RegexHandler{}
 	defs := config.Defs
+	var options *ConfigOptions
+	if config.Options == nil {
+		options = &ConfigOptions{}
+	} else {
+		options = config.Options
+	}
 	for _, def := range defs {
 		reg, err := regexp.Compile(def.Pattern)
 		if err != nil {
 			return nil, err
 		}
-		f, err := HandleFunc(def.Response, config.Options)
+		f, err := HandleFunc(def.Response, options)
 		if err != nil {
 			return nil, err
 		}
-		r.addRoute(reg, enrichHeaders(f, config.Options))
+		r.addRoute(reg, enrichHeaders(f, options))
 	}
 	return &r, nil
 }
