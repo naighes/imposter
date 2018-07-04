@@ -70,3 +70,27 @@ func TestRedirect(t *testing.T) {
 		t.Errorf("expected Location header %s; got %s", expectedUrl, location)
 	}
 }
+
+func TestMatchRsp(t *testing.T) {
+	const expectedStatusCode = 200
+	const expectedText = "Hello Text!"
+	m := MatchRsp{Body: fmt.Sprintf("${text(%s)}", expectedText), StatusCode: expectedStatusCode}
+	r := httptest.NewRecorder()
+	h := MatchRspHttpHandler{Content: &m}
+	f, err := h.HandleFunc()
+	if err != nil {
+		t.Errorf("HandleFunc raised an error")
+	}
+	f(r, nil)
+	if r.Code != expectedStatusCode {
+		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
+	}
+	rsp := r.Result()
+	var content []byte
+	if content, err = ioutil.ReadAll(rsp.Body); err != nil {
+		t.Errorf("cannot read body")
+	}
+	if c := string(content); c != expectedText {
+		t.Errorf("expected body %s; got %s", expectedText, c)
+	}
+}
