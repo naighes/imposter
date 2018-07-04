@@ -27,22 +27,20 @@ type startOpts struct {
 	configFile string
 }
 
-func start(opts *startOpts) (err error) {
-	rawConfig := []byte("{}")
-	configPath, err := filepath.Abs(opts.configFile)
-	if err == nil {
-		rawConfig, err = ioutil.ReadFile(opts.configFile)
-		if err != nil {
-			rawConfig = []byte("{}")
+func readConfig(configFile string) *Config {
+	if configPath, err := filepath.Abs(configFile); err == nil {
+		if rawConfig, err := ioutil.ReadFile(configPath); err == nil {
+			if config, err := ParseConfig(rawConfig); err == nil {
+				log.Printf("read configuration from file '%s'", configPath)
+				return config
+			}
 		}
 	}
-	config, err := ParseConfig(rawConfig)
-	if err != nil {
-		return fmt.Errorf("could not parse configuration: %v\n", err)
-	}
-	if opts.configFile != "stdin" {
-		log.Printf("read configuration from file '%s'", configPath)
-	}
+	return &Config{}
+}
+
+func start(opts *startOpts) (err error) {
+	config := readConfig(opts.configFile)
 	router, err := NewRegexHandler(config)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v\n", err)
