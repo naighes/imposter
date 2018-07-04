@@ -1,74 +1,38 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"log"
 	"os"
-	"strconv"
 )
 
-type Args struct {
-	port       int
-	configFile string
-}
-
-func ParseArgs(args []string) (*Args, error) {
-	r := Args{port: 8080}
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		switch arg {
-		case "--port":
-			i = i + 1
-			if len(args)-1 < i {
-				return nil, fmt.Errorf("expected value for token '%s'", arg)
-			}
-			v, err := strconv.Atoi(args[i])
-			(&r).port = v
-			if err != nil {
-				return nil, fmt.Errorf("unexpected value for token '%s': expected 'int'", arg)
-			}
-		case "--config-file":
-			i = i + 1
-			if len(args)-1 < i {
-				return nil, fmt.Errorf("expected value for token '%s'", arg)
-			}
-			(&r).configFile = args[i]
-		default:
-			return nil, fmt.Errorf("flag '%s'is not recognized", arg)
+func main() {
+	commands := map[string]command{
+		"start": startCmd(),
+	}
+	fs := flag.NewFlagSet("imposter", flag.ExitOnError)
+	fs.Usage = func() {
+		fmt.Println("Usage: imposter <command> [command flags]")
+		for name, cmd := range commands {
+			fmt.Printf("\n%s command:\n", name)
+			cmd.fs.PrintDefaults()
 		}
 	}
-	return &r, nil
+	fs.Parse(os.Args[1:])
+	args := fs.Args()
+	if len(args) == 0 {
+		fs.Usage()
+		os.Exit(1)
+	}
+	if cmd, ok := commands[args[0]]; !ok {
+		log.Fatalf("unknown command: %s", args[0])
+	} else if err := cmd.fn(args[1:]); err != nil {
+		log.Fatal(err)
+	}
 }
 
-func main() {
-	args, err := ParseArgs(os.Args[1:])
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	rawConfig, err := ioutil.ReadFile(args.configFile)
-	if err != nil {
-		rawConfig = []byte("{}")
-	}
-	config, err := ParseConfig(rawConfig)
-	if err != nil {
-		fmt.Printf("could not parse configuration: %v\n", err)
-		os.Exit(1)
-	}
-	router, err := NewRegexHandler(config)
-	if err != nil {
-		fmt.Printf("could not load configuration: %v\n", err)
-		os.Exit(1)
-	}
-	listenAddr := fmt.Sprintf("localhost:%d", args.port)
-	server := &http.Server{
-		Addr:    listenAddr,
-		Handler: router,
-	}
-	done := make(chan bool)
-	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		fmt.Printf("could not listen on %s: %v\n", listenAddr, err)
-	}
-	<-done
+type command struct {
+	fs *flag.FlagSet
+	fn func(args []string) error
 }
