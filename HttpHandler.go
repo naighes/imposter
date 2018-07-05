@@ -16,14 +16,17 @@ type FuncHttpHandler struct {
 }
 
 func (h FuncHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request), error) {
-	name, arg, err := ParseFunc(h.Content)
+	name, args, err := ParseFunc(h.Content)
 	if err != nil {
 		return nil, err
 	}
 	switch name {
 	case "link":
+		if l := len(args); l != 1 {
+			return nil, fmt.Errorf("'link function' expected '%d' argument(s); got %d", 1, l)
+		}
 		return func(w http.ResponseWriter, r *http.Request) {
-			rsp, err := h.HttpGet(arg)
+			rsp, err := h.HttpGet(args[0])
 			defer rsp.Body.Close()
 			if err != nil {
 				writeError(w, err)
@@ -42,7 +45,7 @@ func (h FuncHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request),
 		}, nil
 	case "redirect":
 		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Location", arg)
+			w.Header().Set("Location", args[0])
 			w.WriteHeader(301)
 		}, nil
 	default:

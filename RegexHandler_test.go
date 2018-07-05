@@ -23,7 +23,7 @@ func TestEmptyRuleSet(t *testing.T) {
 
 func TestMatchingRule(t *testing.T) {
 	const expected = 200
-	rsp := MatchRsp{Body: "${text(hello)}", StatusCode: expected}
+	rsp := MatchRsp{Body: "${text(\"hello\")}", StatusCode: expected}
 	def := MatchDef{Pattern: "^/[0-9]+$", Response: &rsp}
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}
@@ -42,7 +42,7 @@ func TestMatchingRule(t *testing.T) {
 
 func TestNonMatchingRule(t *testing.T) {
 	const expected = 404
-	rsp := MatchRsp{Body: "${text(hello)}", StatusCode: 200}
+	rsp := MatchRsp{Body: "${text(\"hello\")}", StatusCode: 200}
 	def := MatchDef{Pattern: "^/[0-9]+$", Response: &rsp}
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}

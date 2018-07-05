@@ -38,15 +38,15 @@ func ParseConfig(j []byte) (*Config, error) {
 func (rsp *MatchRsp) ParseBody() func() (string, error) {
 	body := rsp.Body
 	return func() (string, error) {
-		name, arg, err := ParseFunc(body)
+		name, args, err := ParseFunc(body)
 		if err != nil {
 			return "", err
 		}
 		switch name {
 		case "text":
-			return arg, nil
+			return args[0], nil
 		case "file":
-			content, err := ioutil.ReadFile(arg)
+			content, err := ioutil.ReadFile(args[0])
 			if err != nil {
 				return "", err
 			}

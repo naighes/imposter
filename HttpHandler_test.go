@@ -13,7 +13,7 @@ func TestLinkWhenHttpGetRaisesAnError(t *testing.T) {
 	get := func(string) (*http.Response, error) {
 		return (&ResponseMock{}).MakeResponse(), fmt.Errorf("raised error")
 	}
-	h := FuncHttpHandler{Content: "${link(http://fak.eurl)}", HttpGet: get}
+	h := FuncHttpHandler{Content: "${link(\"http://fak.eurl\")}", HttpGet: get}
 	f, err := h.HandleFunc()
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
@@ -33,7 +33,7 @@ func TestLinkWhenHttpGetReturnsOk(t *testing.T) {
 	get := func(string) (*http.Response, error) {
 		return (&ResponseMock{StatusCode: expectedStatusCode, Body: body}).MakeResponse(), nil
 	}
-	h := FuncHttpHandler{Content: "${link(http://fak.eurl)}", HttpGet: get}
+	h := FuncHttpHandler{Content: "${link(\"http://fak.eurl\")}", HttpGet: get}
 	f, err := h.HandleFunc()
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
@@ -55,7 +55,7 @@ func TestLinkWhenHttpGetReturnsOk(t *testing.T) {
 func TestRedirect(t *testing.T) {
 	const expectedUrl = "http://fak.eurl"
 	r := httptest.NewRecorder()
-	h := FuncHttpHandler{Content: fmt.Sprintf("${redirect(%s)}", expectedUrl)}
+	h := FuncHttpHandler{Content: fmt.Sprintf("${redirect(\"%s\")}", expectedUrl)}
 	f, err := h.HandleFunc()
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
@@ -74,7 +74,7 @@ func TestRedirect(t *testing.T) {
 func TestMatchRsp(t *testing.T) {
 	const expectedStatusCode = 200
 	const expectedText = "Hello Text!"
-	m := MatchRsp{Body: fmt.Sprintf("${text(%s)}", expectedText), StatusCode: expectedStatusCode}
+	m := MatchRsp{Body: fmt.Sprintf("${text(\"%s\")}", expectedText), StatusCode: expectedStatusCode}
 	r := httptest.NewRecorder()
 	h := MatchRspHttpHandler{Content: &m}
 	f, err := h.HandleFunc()
