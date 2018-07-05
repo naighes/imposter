@@ -50,6 +50,25 @@ func parseString(str string) (string, int, error) {
 	}
 }
 
+func parseNumber(str string) (string, int, error) {
+	var chars []byte
+	i := 0
+	for {
+		if i >= len(str) {
+			return string(chars), i, nil
+		}
+		c := str[i]
+		if c >= '0' && c <= '9' {
+			chars = append(chars, c)
+		} else if c == ',' {
+			return string(chars), i + 1, nil
+		} else if c != ' ' {
+			return "", -1, fmt.Errorf("expected token ','; got %s", c)
+		}
+		i = i + 1
+	}
+}
+
 func ParseArgs(str string) ([]string, error) {
 	var r []string
 	for {
@@ -64,6 +83,8 @@ func ParseArgs(str string) ([]string, error) {
 		switch str[i] {
 		case '"':
 			parser = parseString
+		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
+			parser = parseNumber
 		default:
 			return nil, fmt.Errorf("could not find a parser for the current token")
 		}
