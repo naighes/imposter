@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -12,45 +11,31 @@ type HttpHandler interface {
 
 type FuncHttpHandler struct {
 	Content string
-	HttpGet func(string) (*http.Response, error)
 }
 
 func (h FuncHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request), error) {
-	name, args, err := ParseFunc(h.Content)
+	e, err := ParseExpression(h.Content)
 	if err != nil {
 		return nil, err
 	}
-	switch name {
-	case "link":
-		if l := len(args); l != 1 {
-			return nil, fmt.Errorf("'link function' expected '%d' argument(s); got %d", 1, l)
+	return func(w http.ResponseWriter, r *http.Request) {
+		a, err := e.evaluate()
+		if err != nil {
+			writeError(w, err)
+			return
 		}
-		return func(w http.ResponseWriter, r *http.Request) {
-			rsp, err := h.HttpGet(args[0])
-			defer rsp.Body.Close()
-			if err != nil {
-				writeError(w, err)
-				return
-			}
-			body, err := ioutil.ReadAll(rsp.Body)
-			if err != nil {
-				writeError(w, err)
-				return
-			}
-			for k, _ := range rsp.Header {
-				w.Header().Set(k, rsp.Header.Get(k))
-			}
-			w.WriteHeader(rsp.StatusCode)
-			fmt.Fprintf(w, string(body))
-		}, nil
-	case "redirect":
-		return func(w http.ResponseWriter, r *http.Request) {
-			w.Header().Set("Location", args[0])
-			w.WriteHeader(301)
-		}, nil
-	default:
-		return nil, fmt.Errorf("function '%s' is not supported", name)
-	}
+		rsp, ok := a.(*HttpRsp)
+		if !ok {
+			// TODO: better error message
+			writeError(w, fmt.Errorf("expected full HttpRsp; got '%v' instead", a))
+			return
+		}
+		for k, _ := range rsp.Headers {
+			w.Header().Set(k, rsp.Headers.Get(k))
+		}
+		w.WriteHeader(rsp.StatusCode)
+		fmt.Fprintf(w, rsp.Body)
+	}, nil
 }
 
 type MatchRspHttpHandler struct {
@@ -59,19 +44,29 @@ type MatchRspHttpHandler struct {
 
 func (h MatchRspHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
-	parseBody := rsp.ParseBody()
+	e, err := ParseExpression(rsp.Body)
+	if err != nil {
+		return nil, err
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := parseBody()
+		a, err := e.evaluate()
 		if err != nil {
 			writeError(w, err)
 			return
 		}
+		b, ok := a.(string)
+		if !ok {
+			// TODO: better error message
+			writeError(w, fmt.Errorf("expected string; got '%v' instead", a))
+			return
+		}
 		if rsp.Headers != nil {
+			// TODO: evaluate headers
 			for k, v := range rsp.Headers {
 				w.Header().Set(k, v.(string))
 			}
 		}
 		w.WriteHeader(rsp.StatusCode)
-		fmt.Fprintf(w, body)
+		fmt.Fprintf(w, b)
 	}, nil
 }

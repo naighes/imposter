@@ -1,106 +1,332 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
-	"strings"
+	"io/ioutil"
+	"math"
+	"net/http"
+	"strconv"
 )
 
-func ParseFunc(str string) (string, []string, error) {
-	start := strings.Index(str, "${")
-	if start != 0 {
-		return "", nil, fmt.Errorf("unexpected token '%c' at position '0': expected '${'", str[1])
+type expression interface {
+	evaluate() (interface{}, error)
+}
+
+type function struct {
+	name string
+	args []expression
+}
+
+type stringIdentity struct {
+	value string
+}
+
+type integerIdentity struct {
+	value string
+}
+
+func (e stringIdentity) evaluate() (interface{}, error) {
+	return e.value, nil
+}
+
+func (e integerIdentity) evaluate() (interface{}, error) {
+	return strconv.Atoi(e.value)
+}
+
+func (e function) evaluate() (interface{}, error) {
+	switch e.name {
+	case "link":
+		return evaluateLink(e.args)
+	case "redirect":
+		return evaluateRedirect(e.args)
+	case "file":
+		return evaluateFile(e.args)
+	default:
+		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
-	end := len(str) - 1
-	if str[end] != '}' {
-		return "", nil, fmt.Errorf("unexpected token '%c' at position '%d': expected '}'", str[end], end)
+}
+
+type HttpRsp struct {
+	Body       string
+	Headers    http.Header
+	StatusCode int
+}
+
+func evaluateLink(args []expression) (interface{}, error) {
+	if l := len(args); l != 1 {
+		return nil, fmt.Errorf("function 'link' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	rest := str[2:end]
-	start = strings.Index(rest, "(")
-	if start <= 0 {
-		return "", nil, fmt.Errorf("expected token '('")
-	}
-	name := rest[0:start]
-	end = len(rest) - 1
-	if rest[end] != ')' {
-		return "", nil, fmt.Errorf("unexpected token '%c' at position '%d': expected ')'", rest[end], end)
-	}
-	arg := rest[start+1 : end]
-	args, err := ParseArgs(arg)
+	a, err := args[0].evaluate()
 	if err != nil {
-		return "", nil, fmt.Errorf("an error has occurred on arguments parsing: %s", err)
+		return 0, fmt.Errorf("evaluation error: %s", err)
 	}
-	return name, args, nil
+	b, ok := a.(string)
+	if !ok {
+		return 0, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	rsp, err := http.Get(b)
+	defer rsp.Body.Close()
+	if err != nil {
+		return 0, fmt.Errorf("evaluation error: %s", err)
+	}
+	body, err := ioutil.ReadAll(rsp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("evaluation error: %s", err)
+	}
+	r := &HttpRsp{Body: string(body), Headers: rsp.Header, StatusCode: rsp.StatusCode}
+	return r, nil
 }
 
-func parseString(str string) (string, int, error) {
-	start := 1
+func evaluateRedirect(args []expression) (interface{}, error) {
+	if l := len(args); l != 1 {
+		return nil, fmt.Errorf("function 'redirect' is expecting one argument of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate()
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %s", err)
+	}
+	b, ok := a.(string)
+	if !ok {
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	h := make(http.Header)
+	h.Set("Location", b)
+	r := &HttpRsp{Headers: h, StatusCode: 301}
+	return r, nil
+}
+
+func evaluateFile(args []expression) (string, error) {
+	if l := len(args); l != 1 {
+		return "", fmt.Errorf("function 'file' is expecting one argument of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate()
+	if err != nil {
+		return "", fmt.Errorf("evaluation error: %s", err)
+	}
+	b, ok := a.(string)
+	if !ok {
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	content, err := ioutil.ReadFile(b)
+	if err != nil {
+		return "", err
+	}
+	return string(content), nil
+}
+
+type parser func(string, int) (expression, int, error)
+
+func stringParser(str string, start int) (expression, int, error) {
+	end := start + 1
 	for {
-		s := str[start:]
-		i := strings.Index(s, "\"")
-		if i == -1 {
-			return "", -1, fmt.Errorf("expected token '\"'")
+		if end >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, end)
 		}
-		if s[i-1] != '\\' {
-			r := str[1 : start+i]
-			i = i + start + 1
-			return r, i, nil
+		c := str[end]
+		if c == '"' {
+			if str[end-1] == '\\' {
+				end = end + 1
+				continue
+			} else {
+				break
+			}
 		} else {
-			start = start + i + 1
+			end = end + 1
+			continue
 		}
 	}
+	// TODO: what about empty string?
+	e := &stringIdentity{value: str[start+1 : end]}
+	return e, end + 1, nil
 }
 
-func parseNumber(str string) (string, int, error) {
-	var chars []byte
-	i := 0
+func integerParser(str string, start int) (expression, int, error) {
+	end := start
 	for {
-		if i >= len(str) {
-			return string(chars), i, nil
+		if end >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, end)
 		}
-		c := str[i]
+		c := str[end]
 		if c >= '0' && c <= '9' {
-			chars = append(chars, c)
-		} else if c == ',' {
-			return string(chars), i + 1, nil
-		} else if c != ' ' {
-			return "", -1, fmt.Errorf("expected token ','; got %s", c)
-		}
-		i = i + 1
-	}
-}
-
-func ParseArgs(str string) ([]string, error) {
-	var r []string
-	for {
-		i := 0
-		str = strings.TrimSpace(str)
-		if len(str) == 0 {
+			end = end + 1
+			continue
+		} else {
 			break
 		}
-		var parser func(string) (string, int, error)
-		var err error
-		var token string
-		switch str[i] {
-		case '"':
-			parser = parseString
-		case '0', '1', '2', '3', '4', '5', '6', '7', '8', '9':
-			parser = parseNumber
-		default:
-			return nil, fmt.Errorf("could not find a parser for the current token")
+	}
+	e := &integerIdentity{value: str[start:end]}
+	return e, end, nil
+}
+
+func functionParser(str string, start int) (expression, int, error) {
+	start = start + 2
+	for {
+		if start >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, start)
 		}
-		token, i, err = parser(str[i:])
+		c := str[start]
+		if c == ' ' {
+			start = start + 1
+			continue
+		}
+		if (c > '0' && c < '9') || (c > 'a' && c < 'z') || (c > 'A' && c < 'Z') || c == '_' {
+			break
+		} else {
+			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, start), str, start)
+		}
+	}
+	end := start
+	for {
+		if end >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, end)
+		}
+		c := str[end]
+		if (c > '0' && c < '9') || (c > 'a' && c < 'z') || (c > 'A' && c < 'Z') || c == '_' {
+			end = end + 1
+			continue
+		}
+		break
+	}
+	if end == start {
+		return nil, -1, prettyError("expected function name", str, end)
+	}
+	name := str[start:end]
+	for {
+		if end >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, end)
+		}
+		c := str[end]
+		if c == ' ' {
+			end = end + 1
+			continue
+		}
+		if c == '(' {
+			break
+		}
+		return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d", c, end), str, end)
+	}
+	var args []expression
+	var err error
+	args, end, err = parseArgs(str, end+1)
+	if err != nil {
+		return nil, -1, err
+	}
+	t := &function{name: name, args: args}
+	for {
+		if end >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, end)
+		}
+		c := str[end]
+		if c == ' ' {
+			end = end + 1
+			continue
+		}
+		if c == '}' {
+			break
+		}
+		return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d", c, end), str, end)
+	}
+	return t, end + 1, nil
+}
+
+func getParser(str string, start int) (parser, int, error) {
+	for {
+		if start >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, start)
+		}
+		c := str[start]
+		if c == ' ' {
+			start = start + 1
+			continue
+		}
+		if c == '$' && start < len(str)-1 && str[start+1] == '{' {
+			return functionParser, start, nil
+		}
+		if c == '"' {
+			return stringParser, start, nil
+		}
+		if c >= '0' && c <= '9' {
+			return integerParser, start, nil
+		}
+		return nil, -1, prettyError("could not find a parse for the current token", str, start)
+	}
+}
+
+func parseArgs(str string, start int) ([]expression, int, error) {
+	var r []expression
+	hasToken := true
+	// TODO: cosa succede la prima volta? -> probabilmente, se la stringa e' vuota basta tornare una lista vuota
+	for hasToken {
+		var p parser
+		var e expression
+		var err error
+		p, start, err = getParser(str, start)
+		if err != nil {
+			return nil, -1, err
+		}
+		e, start, err = p(str, start)
+		if err != nil {
+			return nil, -1, err
+		}
+		r = append(r, e)
+		for {
+			if start >= len(str) {
+				return nil, -1, prettyError("expected token ')'", str, start)
+			}
+			c := str[start]
+			start = start + 1
+			if c == ')' {
+				hasToken = false
+				break
+			}
+			if c == ' ' {
+				continue
+			}
+			if c != ',' {
+				return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ','", c, start-1), str, start-1)
+			}
+			break
+		}
+		if !hasToken {
+			break
+		}
+	}
+	return r, start, nil
+}
+
+func ParseExpression(str string) (expression, error) {
+	if len(str) > 1 && str[0] == '$' && str[1] == '{' {
+		e, _, err := functionParser(str, 0)
 		if err != nil {
 			return nil, err
 		}
-		r = append(r, token)
-		if i == len(str) {
-			break
-		}
-		str = strings.TrimSpace(str[i:])
-		if str[0] != ',' {
-			return nil, fmt.Errorf("expected token ','; got '%s'", str[0])
-		}
-		str = str[1:]
+		return e, nil
 	}
-	return r, nil
+	e := &stringIdentity{value: str}
+	return e, nil
+}
+
+func prettyError(err string, str string, position int) error {
+	const offset = 15
+	l := int(math.Max(float64(position-offset), 0))
+	r := int(math.Min(float64(position+offset), float64(len(str)-1)))
+	s := str[l : r+1]
+	var b bytes.Buffer
+	b.WriteString(err)
+	b.WriteString("\n")
+	if l > 0 {
+		b.WriteString("...")
+		l = l - 3
+	}
+	b.WriteString(s)
+	if r < len(str)-1 {
+		b.WriteString("...")
+	}
+	b.WriteString("\n")
+	for i := l; i < position; i++ {
+		b.WriteString(" ")
+	}
+	b.WriteString("^")
+	return fmt.Errorf(b.String())
 }

@@ -1,141 +1,93 @@
 package main
 
 import (
-	"fmt"
+	"reflect"
 	"testing"
 )
 
-func TestFuncWithOneStringArg(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg = "http://fak.eurl"
-	input := fmt.Sprintf("${%s(\"%s\")}", expectedName, expectedArg)
-	r, args, err := ParseFunc(input)
+func TestIdentity(t *testing.T) {
+	str := "abc"
+	token, err := ParseExpression(str)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
+		t.Error(err)
+		return
 	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
-	}
-	if l := len(args); l != 1 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
-	}
-	if a := args[0]; a != expectedArg {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg, a)
+	_, ok := token.(*stringIdentity)
+	if !ok {
+		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
+		return
 	}
 }
 
-func TestFuncWithOneStringArgAndTrailingSpaces(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg = "http://fak.eurl"
-	input := fmt.Sprintf("${%s(  \"%s\"  )}", expectedName, expectedArg)
-	r, args, err := ParseFunc(input)
+func TestFunctionWithArguments(t *testing.T) {
+	str := "${  f  (  \"12345\"  ,    987   )  }"
+	token, err := ParseExpression(str)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
+		t.Error(err)
+		return
 	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
+	f, ok := token.(*function)
+	if !ok {
+		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		return
 	}
-	if l := len(args); l != 1 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
+	if f.name != "f" {
+		t.Errorf("expected function named '%s'; got '%s'", "f", f.name)
+		return
 	}
-	if a := args[0]; a != expectedArg {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg, a)
+	if l := len(f.args); l != 2 {
+		t.Errorf("expected '%d' argument(s); got '%d'", 2, l)
+		return
+	}
+	arg1, ok := f.args[0].(*stringIdentity)
+	if !ok {
+		t.Errorf("expected argument of type '*stringIdentity'; got '%s'", reflect.TypeOf(arg1))
+		return
+	}
+	arg2, ok := f.args[1].(*integerIdentity)
+	if !ok {
+		t.Errorf("expected argument of type '*integerIdentity'; got '%s'", reflect.TypeOf(arg2))
+		return
 	}
 }
 
-func TestFuncWithOneStringArgAndEscapedDoubleQuotes(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg = "http\\\"://fak.eurl"
-	input := fmt.Sprintf("${%s(  \"%s\"  )}", expectedName, expectedArg)
-	r, args, err := ParseFunc(input)
+func TestNestedFunctions(t *testing.T) {
+	str := "${  f  (  \"12345\"  ,    ${  g  (   987   ) }  )  }"
+	token, err := ParseExpression(str)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
+		t.Error(err)
+		return
 	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
+	f, ok := token.(*function)
+	if !ok {
+		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		return
 	}
-	if l := len(args); l != 1 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
+	if f.name != "f" {
+		t.Errorf("expected function named '%s'; got '%s'", "f", f.name)
+		return
 	}
-	if a := args[0]; a != expectedArg {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg, a)
+	if l := len(f.args); l != 2 {
+		t.Errorf("expected '%d' argument(s); got '%d'", 2, l)
+		return
 	}
-}
-
-func TestFuncWithTwoStringArgs(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg1 = "http://fak.eurl"
-	const expectedArg2 = "http://fa.keurl"
-	input := fmt.Sprintf("${%s(\"%s\", \"%s\")}", expectedName, expectedArg1, expectedArg2)
-	r, args, err := ParseFunc(input)
-	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
+	arg1, ok := f.args[0].(*stringIdentity)
+	if !ok {
+		t.Errorf("expected argument of type '*stringIdentity'; got '%s'", reflect.TypeOf(arg1))
+		return
 	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
+	g, ok := f.args[1].(*function)
+	if !ok {
+		t.Errorf("expected argument of type '*function'; got '%s'", reflect.TypeOf(g))
+		return
 	}
-	if l := len(args); l != 2 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
+	if l := len(g.args); l != 1 {
+		t.Errorf("expected '%d' argument(s); got '%d'", 1, l)
+		return
 	}
-	if a1, a2 := args[0], args[1]; a1 != expectedArg1 || a2 != expectedArg2 {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg1, a1)
-	}
-}
-
-func TestFuncWithOneIntArg(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg = "123"
-	input := fmt.Sprintf("${%s(%s)}", expectedName, expectedArg)
-	r, args, err := ParseFunc(input)
-	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
-	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
-	}
-	if l := len(args); l != 1 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
-	}
-	if a := args[0]; a != expectedArg {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg, a)
-	}
-}
-
-func TestFuncWithOneIntArgArgAndTrailingSpaces(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg = "123"
-	input := fmt.Sprintf("${%s(   %s   )}", expectedName, expectedArg)
-	r, args, err := ParseFunc(input)
-	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
-	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
-	}
-	if l := len(args); l != 1 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
-	}
-	if a := args[0]; a != expectedArg {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg, a)
-	}
-}
-
-func TestFuncWithMixedStringAndIntArgs(t *testing.T) {
-	const expectedName = "link"
-	const expectedArg1 = "http://fak.eurl"
-	const expectedArg2 = "999"
-	input := fmt.Sprintf("${%s(    \"%s\"   ,    %s)}", expectedName, expectedArg1, expectedArg2)
-	r, args, err := ParseFunc(input)
-	if err != nil {
-		t.Errorf("HandleFunc raised an error: %s", err)
-	}
-	if r != expectedName {
-		t.Errorf("expected function name '%s'; got '%s'", expectedName, r)
-	}
-	if l := len(args); l != 2 {
-		t.Errorf("expected arguments length of %d; got %d", 1, l)
-	}
-	if a1, a2 := args[0], args[1]; a1 != expectedArg1 || a2 != expectedArg2 {
-		t.Errorf("expected argument[0] '%s'; got '%s'", expectedArg1, a1)
+	arg2, ok := g.args[0].(*integerIdentity)
+	if !ok {
+		t.Errorf("expected argument of type '*integerIdentity'; got '%s'", reflect.TypeOf(arg2))
+		return
 	}
 }

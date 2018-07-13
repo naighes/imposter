@@ -2,8 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
 )
 
 type Config struct {
@@ -33,26 +31,4 @@ func ParseConfig(j []byte) (*Config, error) {
 		return nil, err
 	}
 	return r, nil
-}
-
-func (rsp *MatchRsp) ParseBody() func() (string, error) {
-	body := rsp.Body
-	return func() (string, error) {
-		name, args, err := ParseFunc(body)
-		if err != nil {
-			return "", err
-		}
-		switch name {
-		case "text":
-			return args[0], nil
-		case "file":
-			content, err := ioutil.ReadFile(args[0])
-			if err != nil {
-				return "", err
-			}
-			return string(content), nil
-		default:
-			return "", fmt.Errorf("function '%s' is not supported", name)
-		}
-	}
 }

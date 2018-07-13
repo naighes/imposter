@@ -17,7 +17,7 @@
     }, {
       "pattern": "^/[a-z]+$",
       "response": {
-        "body": "${text(\"Hello, string!\")}",
+        "body": "Hello, string!",
         "headers": {
           "Content-Type": "text/plain; charset=utf-8"
         },
@@ -26,7 +26,7 @@
     }, {
       "pattern": "^/[0-9]+$",
       "response": {
-        "body": "${text(\"Hello, number!\")}",
+        "body": "Hello, number!",
         "headers": {
           "Content-Type": "text/plain; charset=utf-8",
           "X-Test": "some additional header"
@@ -36,7 +36,7 @@
     }, {
       "pattern": "^.*$",
       "response": {
-        "body": "${text(\"Hello, default body!\")}",
+        "body": "Hello, default body!",
         "status_code": 200
       }
     }],

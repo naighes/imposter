@@ -70,7 +70,7 @@ func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHttpHandler{Content: str, HttpGet: http.Get}.HandleFunc()
+		return FuncHttpHandler{Content: str}.HandleFunc()
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

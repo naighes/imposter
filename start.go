@@ -43,7 +43,7 @@ func start(opts *startOpts) (err error) {
 	config := readConfig(opts.configFile)
 	router, err := NewRegexHandler(config)
 	if err != nil {
-		return fmt.Errorf("could not load configuration: %v\n", err)
+		return fmt.Errorf("could not load configuration: %v", err)
 	}
 	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
 	server := &http.Server{
@@ -51,9 +51,9 @@ func start(opts *startOpts) (err error) {
 		Handler: router,
 	}
 	done := make(chan bool)
-	log.Printf("starting server listening on port %d", opts.port)
+	log.Printf("starting server listening on port %d\n", opts.port)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		return fmt.Errorf("could not listen on %s: %v\n", listenAddr, err)
+		return fmt.Errorf("could not listen on %s: %v", listenAddr, err)
 	}
 	<-done
 	return nil
