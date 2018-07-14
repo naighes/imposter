@@ -66,11 +66,11 @@ func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
-		return MatchRspHttpHandler{Content: &rsp}.HandleFunc()
+		return MatchRspHttpHandler{Content: &rsp}.HandleFunc(ParseExpression)
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHttpHandler{Content: str}.HandleFunc()
+		return FuncHttpHandler{Content: str}.HandleFunc(ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

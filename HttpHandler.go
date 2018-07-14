@@ -3,18 +3,19 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"reflect"
 )
 
 type HttpHandler interface {
-	HandleFunc() (func(http.ResponseWriter, *http.Request), error)
+	HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error)
 }
 
 type FuncHttpHandler struct {
 	Content string
 }
 
-func (h FuncHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request), error) {
-	e, err := ParseExpression(h.Content)
+func (h FuncHttpHandler) HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+	e, err := parse(h.Content)
 	if err != nil {
 		return nil, err
 	}
@@ -26,8 +27,7 @@ func (h FuncHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request),
 		}
 		rsp, ok := a.(*HttpRsp)
 		if !ok {
-			// TODO: better error message
-			writeError(w, fmt.Errorf("expected full HttpRsp; got '%v' instead", a))
+			writeError(w, fmt.Errorf("full response computing requires a function returning '*HttpRsp' (e.g. 'link', 'redirect', ...); got '%s' instead", reflect.TypeOf(a)))
 			return
 		}
 		for k, _ := range rsp.Headers {
@@ -42,9 +42,9 @@ type MatchRspHttpHandler struct {
 	Content *MatchRsp
 }
 
-func (h MatchRspHttpHandler) HandleFunc() (func(http.ResponseWriter, *http.Request), error) {
+func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
-	e, err := ParseExpression(rsp.Body)
+	e, err := parse(rsp.Body)
 	if err != nil {
 		return nil, err
 	}

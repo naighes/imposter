@@ -3,94 +3,93 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-func TestLinkWhenHttpGetRaisesAnError(t *testing.T) {
+type fakeExpression struct {
+	rsp *HttpRsp
+}
+
+type errorExpression struct {
+	err string
+}
+
+func (e fakeExpression) evaluate() (interface{}, error) {
+	return e.rsp, nil
+}
+
+func (e errorExpression) evaluate() (interface{}, error) {
+	return nil, fmt.Errorf(e.err)
+}
+
+func TestFuncHttpHandlerNoErrors(t *testing.T) {
+	const expectedStatusCode = 200
+	const expectedBody = "some content"
 	r := httptest.NewRecorder()
-	get := func(string) (*http.Response, error) {
-		return (&ResponseMock{}).MakeResponse(), fmt.Errorf("raised error")
+	p := func(string) (expression, error) {
+		e := &fakeExpression{rsp: &HttpRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
+		return e, nil
 	}
-	h := FuncHttpHandler{Content: "${link(\"http://fak.eurl\")}", HttpGet: get}
-	f, err := h.HandleFunc()
+	h := FuncHttpHandler{Content: "unrelevant content"}
+	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
+		return
 	}
 	f(r, nil)
+	if r.Code != expectedStatusCode {
+		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
+		return
+	}
+	rsp := r.Result()
+	var body []byte
+	if body, err = ioutil.ReadAll(rsp.Body); err != nil {
+		t.Errorf("cannot read body")
+		return
+	}
+	if b := string(body); b != expectedBody {
+		t.Errorf("expected body '%s'; got '%s'", expectedBody, b)
+		return
+	}
+}
+
+func TestFuncHttpHandlerWithErrors(t *testing.T) {
 	const expectedStatusCode = 500
-	if r.Code != expectedStatusCode {
-		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
-	}
-}
-
-func TestLinkWhenHttpGetReturnsOk(t *testing.T) {
-	const expectedStatusCode = 200
-	const expectedBody = "Hello Test!"
 	r := httptest.NewRecorder()
-	body := []byte(expectedBody)
-	get := func(string) (*http.Response, error) {
-		return (&ResponseMock{StatusCode: expectedStatusCode, Body: body}).MakeResponse(), nil
+	p := func(string) (expression, error) {
+		e := &errorExpression{err: "some error"}
+		return e, nil
 	}
-	h := FuncHttpHandler{Content: "${link(\"http://fak.eurl\")}", HttpGet: get}
-	f, err := h.HandleFunc()
+	h := FuncHttpHandler{Content: "unrelevant content"}
+	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
+		return
 	}
 	f(r, nil)
 	if r.Code != expectedStatusCode {
 		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
-	}
-	rsp := r.Result()
-	var content []byte
-	if content, err = ioutil.ReadAll(rsp.Body); err != nil {
-		t.Errorf("cannot read body")
-	}
-	if c := string(content); c != expectedBody {
-		t.Errorf("expected body %s; got %s", expectedBody, c)
+		return
 	}
 }
 
-func TestRedirect(t *testing.T) {
-	const expectedUrl = "http://fak.eurl"
+func TestFuncHttpHandlerWithoutHttpRsp(t *testing.T) {
+	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
-	h := FuncHttpHandler{Content: fmt.Sprintf("${redirect(\"%s\")}", expectedUrl)}
-	f, err := h.HandleFunc()
+	p := func(string) (expression, error) {
+		e := &stringIdentity{value: "some value"}
+		return e, nil
+	}
+	h := FuncHttpHandler{Content: "unrelevant content"}
+	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
-	}
-	f(r, nil)
-	const expectedStatusCode = 301
-	if r.Code != expectedStatusCode {
-		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
-	}
-	location := r.Header().Get("Location")
-	if location != expectedUrl {
-		t.Errorf("expected Location header %s; got %s", expectedUrl, location)
-	}
-}
-
-func TestMatchRsp(t *testing.T) {
-	const expectedStatusCode = 200
-	const expectedText = "Hello Text!"
-	m := MatchRsp{Body: fmt.Sprintf("${text(\"%s\")}", expectedText), StatusCode: expectedStatusCode}
-	r := httptest.NewRecorder()
-	h := MatchRspHttpHandler{Content: &m}
-	f, err := h.HandleFunc()
-	if err != nil {
-		t.Errorf("HandleFunc raised an error")
+		return
 	}
 	f(r, nil)
 	if r.Code != expectedStatusCode {
 		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
-	}
-	rsp := r.Result()
-	var content []byte
-	if content, err = ioutil.ReadAll(rsp.Body); err != nil {
-		t.Errorf("cannot read body")
-	}
-	if c := string(content); c != expectedText {
-		t.Errorf("expected body %s; got %s", expectedText, c)
+		return
 	}
 }
