@@ -56,8 +56,7 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) 
 		}
 		b, ok := a.(string)
 		if !ok {
-			// TODO: better error message
-			writeError(w, fmt.Errorf("expected string; got '%v' instead", a))
+			writeError(w, fmt.Errorf("expected a body of type string; got '%s' instead", reflect.TypeOf(a)))
 			return
 		}
 		if rsp.Headers != nil {
