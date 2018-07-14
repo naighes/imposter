@@ -136,7 +136,6 @@ func stringParser(str string, start int) (expression, int, error) {
 			continue
 		}
 	}
-	// TODO: what about empty string?
 	e := &stringIdentity{value: str[start+1 : end]}
 	return e, end + 1, nil
 }
@@ -249,14 +248,16 @@ func getParser(str string, start int) (parser, int, error) {
 		if c >= '0' && c <= '9' {
 			return integerParser, start, nil
 		}
-		return nil, -1, prettyError("could not find a parse for the current token", str, start)
+		if c == ')' {
+			return nil, start, nil
+		}
+		return nil, -1, prettyError("could not find a parser for the current token", str, start)
 	}
 }
 
 func parseArgs(str string, start int) ([]expression, int, error) {
 	var r []expression
 	hasToken := true
-	// TODO: cosa succede la prima volta? -> probabilmente, se la stringa e' vuota basta tornare una lista vuota
 	for hasToken {
 		var p parser
 		var e expression
@@ -265,11 +266,13 @@ func parseArgs(str string, start int) ([]expression, int, error) {
 		if err != nil {
 			return nil, -1, err
 		}
-		e, start, err = p(str, start)
-		if err != nil {
-			return nil, -1, err
+		if p != nil {
+			e, start, err = p(str, start)
+			if err != nil {
+				return nil, -1, err
+			}
+			r = append(r, e)
 		}
-		r = append(r, e)
 		for {
 			if start >= len(str) {
 				return nil, -1, prettyError("expected token ')'", str, start)
