@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strings"
 
 	"github.com/mitchellh/mapstructure"
 )
@@ -14,13 +15,14 @@ type RegexHandler struct {
 
 type regexRoute struct {
 	pattern *regexp.Regexp
+	method  string
 	handler http.Handler
 }
 
 func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
 		// TODO: host and X-Forwarded-Host
-		if route.pattern.MatchString(r.URL.Path) {
+		if route.pattern.MatchString(r.URL.Path) && r.Method == route.method {
 			route.handler.ServeHTTP(w, r)
 			return
 		}
@@ -29,8 +31,8 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, h func(http.ResponseWriter, *http.Request)) {
-	handler.routes = append(handler.routes, &regexRoute{pattern, http.HandlerFunc(h)})
+func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, method string, h func(http.ResponseWriter, *http.Request)) {
+	handler.routes = append(handler.routes, &regexRoute{pattern, method, http.HandlerFunc(h)})
 }
 
 func NewRegexHandler(config *Config) (*RegexHandler, error) {
@@ -51,9 +53,26 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if err != nil {
 			return nil, err
 		}
-		r.addRoute(reg, enrichHeaders(f, options))
+		method, err := getMethod(def)
+		if err != nil {
+			return nil, err
+		}
+		r.addRoute(reg, method, enrichHeaders(f, options))
 	}
 	return &r, nil
+}
+
+func getMethod(def *MatchDef) (string, error) {
+	if def.Method == "" {
+		return "GET", nil
+	}
+	m := strings.ToUpper(def.Method)
+	switch m {
+	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE":
+		return m, nil
+	default:
+		return "", fmt.Errorf("HTTP method '%s' is not supported", m)
+	}
 }
 
 func writeError(w http.ResponseWriter, err error) {

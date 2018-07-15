@@ -102,7 +102,7 @@ func TestFunctionWithoutArguments(t *testing.T) {
 }
 
 func TestNestedFunctions(t *testing.T) {
-	str := "${  f  (  \"12345\"  ,    ${  g  (   987   ) }  )  }"
+	str := "${  f  (  \"12345\"  ,      g  (   987   )   )  }"
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)

@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 type expression interface {
@@ -159,7 +160,6 @@ func integerParser(str string, start int) (expression, int, error) {
 }
 
 func functionParser(str string, start int) (expression, int, error) {
-	start = start + 2
 	for {
 		if start >= len(str) {
 			return nil, -1, prettyError("unexpected end of string", str, start)
@@ -212,20 +212,6 @@ func functionParser(str string, start int) (expression, int, error) {
 		return nil, -1, err
 	}
 	t := &function{name: name, args: args}
-	for {
-		if end >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, end)
-		}
-		c := str[end]
-		if c == ' ' {
-			end = end + 1
-			continue
-		}
-		if c == '}' {
-			break
-		}
-		return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d", c, end), str, end)
-	}
 	return t, end + 1, nil
 }
 
@@ -239,7 +225,7 @@ func getParser(str string, start int) (parser, int, error) {
 			start = start + 1
 			continue
 		}
-		if c == '$' && start < len(str)-1 && str[start+1] == '{' {
+		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
 			return functionParser, start, nil
 		}
 		if c == '"' {
@@ -299,8 +285,8 @@ func parseArgs(str string, start int) ([]expression, int, error) {
 }
 
 func ParseExpression(str string) (expression, error) {
-	if len(str) > 1 && str[0] == '$' && str[1] == '{' {
-		e, _, err := functionParser(str, 0)
+	if strings.Index(str, "${") == 0 && str[len(str)-1] == '}' {
+		e, _, err := functionParser(str[2:len(str)-1], 0)
 		if err != nil {
 			return nil, err
 		}

@@ -1,5 +1,15 @@
 {
     "pattern_list" : [{
+      "pattern": "^/mypost$",
+      "method": "POST",
+      "response": {
+        "body": "Hello, post!",
+        "headers": {
+          "Content-Type": "text/plain; charset=utf-8"
+        },
+        "status_code": 200
+      }
+    }, {
       "pattern": "^/mylink$",
       "response": "${link(\"http://localhost:8080/aaa\")}"
     }, {

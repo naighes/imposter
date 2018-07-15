@@ -15,6 +15,7 @@ type ConfigOptions struct {
 
 type MatchDef struct {
 	Pattern  string      `json:"pattern"`
+	Method   string      `json:"method"`
 	Response interface{} `json:"response"`
 }
 
