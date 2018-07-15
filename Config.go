@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"time"
 )
 
 type Config struct {
@@ -14,9 +15,10 @@ type ConfigOptions struct {
 }
 
 type MatchDef struct {
-	Pattern  string      `json:"pattern"`
-	Method   string      `json:"method"`
-	Response interface{} `json:"response"`
+	Pattern  string        `json:"pattern"`
+	Method   string        `json:"method"`
+	Latency  time.Duration `json:"latency"`
+	Response interface{}   `json:"response"`
 }
 
 type MatchRsp struct {

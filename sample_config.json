@@ -2,6 +2,7 @@
     "pattern_list" : [{
       "pattern": "^/mypost$",
       "method": "POST",
+      "latency": 2000,
       "response": {
         "body": "Hello, post!",
         "headers": {
