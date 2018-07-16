@@ -49,12 +49,18 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	} else {
 		options = config.Options
 	}
+	var vars map[string]interface{}
+	if config.Vars == nil {
+		vars = make(map[string]interface{})
+	} else {
+		vars = config.Vars
+	}
 	for _, def := range defs {
 		reg, err := regexp.Compile(def.Pattern)
 		if err != nil {
 			return nil, err
 		}
-		f, err := HandleFunc(def.Response, options)
+		f, err := HandleFunc(def.Response, options, vars)
 		if err != nil {
 			return nil, err
 		}
@@ -89,15 +95,15 @@ func writeError(w http.ResponseWriter, err error) {
 	fmt.Fprintf(w, err.Error())
 }
 
-func HandleFunc(o interface{}, options *ConfigOptions) (func(http.ResponseWriter, *http.Request), error) {
+func HandleFunc(o interface{}, options *ConfigOptions, vars map[string]interface{}) (func(http.ResponseWriter, *http.Request), error) {
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
-		return MatchRspHttpHandler{Content: &rsp}.HandleFunc(ParseExpression)
+		return MatchRspHttpHandler{Content: &rsp, Vars: vars}.HandleFunc(ParseExpression)
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHttpHandler{Content: str}.HandleFunc(ParseExpression)
+		return FuncHttpHandler{Content: str, Vars: vars}.HandleFunc(ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

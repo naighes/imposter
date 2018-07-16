@@ -15,11 +15,11 @@ type errorExpression struct {
 	err string
 }
 
-func (e fakeExpression) evaluate() (interface{}, error) {
+func (e fakeExpression) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return e.rsp, nil
 }
 
-func (e errorExpression) evaluate() (interface{}, error) {
+func (e errorExpression) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return nil, fmt.Errorf(e.err)
 }
 

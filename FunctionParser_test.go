@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -31,7 +32,7 @@ func TestEmptyString(t *testing.T) {
 		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	s, err := si.evaluate()
+	s, err := si.evaluate(make(map[string]interface{}))
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -102,7 +103,8 @@ func TestFunctionWithoutArguments(t *testing.T) {
 }
 
 func TestNestedFunctions(t *testing.T) {
-	str := "${  f  (  \"12345\"  ,      g  (   987   )   )  }"
+	const expectedFuncName = "func"
+	str := fmt.Sprintf("${  %s  (  \"12345\"  ,      g  (   987   )   )  }", expectedFuncName)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -113,8 +115,8 @@ func TestNestedFunctions(t *testing.T) {
 		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	if f.name != "f" {
-		t.Errorf("expected function named '%s'; got '%s'", "f", f.name)
+	if f.name != expectedFuncName {
+		t.Errorf("expected function named '%s'; got '%s'", expectedFuncName, f.name)
 		return
 	}
 	if l := len(f.args); l != 2 {
@@ -138,6 +140,56 @@ func TestNestedFunctions(t *testing.T) {
 	arg2, ok := g.args[0].(*integerIdentity)
 	if !ok {
 		t.Errorf("expected argument of type '*integerIdentity'; got '%s'", reflect.TypeOf(arg2))
+		return
+	}
+}
+
+func TestEvaluateVar(t *testing.T) {
+	const expected = "hello"
+	str := "${  var  (  \"a\"    )  }"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	vars := map[string]interface{}{
+		"a": expected,
+	}
+	e, err := token.evaluate(vars)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if e != expected {
+		t.Errorf("expected value '%s'; got '%v'", expected, e)
+		return
+	}
+}
+
+func TestVarAsFunctionArg(t *testing.T) {
+	const expectedFuncName = "link"
+	str := fmt.Sprintf("${%s(var(\"some_link\"))}", expectedFuncName)
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, ok := token.(*function)
+	if !ok {
+		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	if f.name != expectedFuncName {
+		t.Errorf("expected function named '%s'; got '%s'", expectedFuncName, f.name)
+		return
+	}
+	if l := len(f.args); l != 1 {
+		t.Errorf("expected '%d' argument(s); got '%d'", 1, l)
+		return
+	}
+	arg1, ok := f.args[0].(*function)
+	if !ok {
+		t.Errorf("expected argument of type '*function'; got '%s'", reflect.TypeOf(arg1))
 		return
 	}
 }

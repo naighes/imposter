@@ -6,8 +6,9 @@ import (
 )
 
 type Config struct {
-	Options *ConfigOptions `json:"options"`
-	Defs    []*MatchDef    `json:"pattern_list"`
+	Options *ConfigOptions         `json:"options"`
+	Defs    []*MatchDef            `json:"pattern_list"`
+	Vars    map[string]interface{} `json:"vars"`
 }
 
 type ConfigOptions struct {

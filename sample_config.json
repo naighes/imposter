@@ -12,13 +12,13 @@
       }
     }, {
       "pattern": "^/mylink$",
-      "response": "${link(\"http://localhost:8080/aaa\")}"
+      "response": "${link(var(\"some_link\"))}"
     }, {
       "pattern": "^/myfile$",
       "response": {
         "body": "${file(\"./main.go\")}",
         "headers": {
-          "Content-Type": "text/plain; charset=utf-8"
+          "Content-Type": "${var(\"default_content_type\")}"
         },
         "status_code": 200
       }
@@ -53,5 +53,9 @@
     }],
     "options": {
       "enable_cors": true
+    },
+    "vars": {
+        "some_link": "http://localhost:8080/aaa",
+        "default_content_type": "text/plain; charset=utf-8"
     }
 }

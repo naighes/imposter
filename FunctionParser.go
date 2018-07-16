@@ -11,7 +11,7 @@ import (
 )
 
 type expression interface {
-	evaluate() (interface{}, error)
+	evaluate(map[string]interface{}) (interface{}, error)
 }
 
 type function struct {
@@ -27,22 +27,24 @@ type integerIdentity struct {
 	value string
 }
 
-func (e stringIdentity) evaluate() (interface{}, error) {
+func (e stringIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return e.value, nil
 }
 
-func (e integerIdentity) evaluate() (interface{}, error) {
+func (e integerIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return strconv.Atoi(e.value)
 }
 
-func (e function) evaluate() (interface{}, error) {
+func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
 	switch e.name {
 	case "link":
-		return evaluateLink(e.args)
+		return evaluateLink(e.args, vars)
 	case "redirect":
-		return evaluateRedirect(e.args)
+		return evaluateRedirect(e.args, vars)
 	case "file":
-		return evaluateFile(e.args)
+		return evaluateFile(e.args, vars)
+	case "var":
+		return evaluateVar(e.args, vars)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -54,11 +56,11 @@ type HttpRsp struct {
 	StatusCode int
 }
 
-func evaluateLink(args []expression) (interface{}, error) {
+func evaluateLink(args []expression, vars map[string]interface{}) (interface{}, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'link' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate()
+	a, err := args[0].evaluate(vars)
 	if err != nil {
 		return 0, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -79,11 +81,11 @@ func evaluateLink(args []expression) (interface{}, error) {
 	return r, nil
 }
 
-func evaluateRedirect(args []expression) (interface{}, error) {
+func evaluateRedirect(args []expression, vars map[string]interface{}) (interface{}, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'redirect' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate()
+	a, err := args[0].evaluate(vars)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -97,11 +99,11 @@ func evaluateRedirect(args []expression) (interface{}, error) {
 	return r, nil
 }
 
-func evaluateFile(args []expression) (string, error) {
+func evaluateFile(args []expression, vars map[string]interface{}) (string, error) {
 	if l := len(args); l != 1 {
 		return "", fmt.Errorf("function 'file' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate()
+	a, err := args[0].evaluate(vars)
 	if err != nil {
 		return "", fmt.Errorf("evaluation error: %s", err)
 	}
@@ -114,6 +116,24 @@ func evaluateFile(args []expression) (string, error) {
 		return "", err
 	}
 	return string(content), nil
+}
+
+func evaluateVar(args []expression, vars map[string]interface{}) (interface{}, error) {
+	if l := len(args); l != 1 {
+		return "", fmt.Errorf("function 'var' is expecting one argument of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars)
+	if err != nil {
+		return "", fmt.Errorf("evaluation error: %s", err)
+	}
+	b, ok := a.(string)
+	if !ok {
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	if v, ok := vars[b]; ok {
+		return v, nil
+	}
+	return "", fmt.Errorf("evaluation error: cannot find a variable named '%s'", b)
 }
 
 type parser func(string, int) (expression, int, error)
@@ -148,7 +168,7 @@ func integerParser(str string, start int) (expression, int, error) {
 			return nil, -1, prettyError("unexpected end of string", str, end)
 		}
 		c := str[end]
-		if c >= '0' && c <= '9' {
+		if isNumber(c) {
 			end = end + 1
 			continue
 		} else {
@@ -157,6 +177,18 @@ func integerParser(str string, start int) (expression, int, error) {
 	}
 	e := &integerIdentity{value: str[start:end]}
 	return e, end, nil
+}
+
+func isLetter(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func isLetterOrNumber(c byte) bool {
+	return isNumber(c) || isLetter(c)
+}
+
+func isNumber(c byte) bool {
+	return (c >= '0' && c <= '9')
 }
 
 func functionParser(str string, start int) (expression, int, error) {
@@ -169,7 +201,7 @@ func functionParser(str string, start int) (expression, int, error) {
 			start = start + 1
 			continue
 		}
-		if (c > '0' && c < '9') || (c > 'a' && c < 'z') || (c > 'A' && c < 'Z') || c == '_' {
+		if isLetterOrNumber(c) || c == '_' {
 			break
 		} else {
 			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, start), str, start)
@@ -181,7 +213,7 @@ func functionParser(str string, start int) (expression, int, error) {
 			return nil, -1, prettyError("unexpected end of string", str, end)
 		}
 		c := str[end]
-		if (c > '0' && c < '9') || (c > 'a' && c < 'z') || (c > 'A' && c < 'Z') || c == '_' {
+		if isLetterOrNumber(c) || c == '_' {
 			end = end + 1
 			continue
 		}
@@ -212,7 +244,7 @@ func functionParser(str string, start int) (expression, int, error) {
 		return nil, -1, err
 	}
 	t := &function{name: name, args: args}
-	return t, end + 1, nil
+	return t, end, nil
 }
 
 func getParser(str string, start int) (parser, int, error) {
@@ -225,13 +257,13 @@ func getParser(str string, start int) (parser, int, error) {
 			start = start + 1
 			continue
 		}
-		if (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') {
+		if isLetter(c) {
 			return functionParser, start, nil
 		}
 		if c == '"' {
 			return stringParser, start, nil
 		}
-		if c >= '0' && c <= '9' {
+		if isNumber(c) {
 			return integerParser, start, nil
 		}
 		if c == ')' {
