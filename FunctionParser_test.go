@@ -6,7 +6,35 @@ import (
 	"testing"
 )
 
-func TestIdentity(t *testing.T) {
+func TestIntegerIdentity(t *testing.T) {
+	str := "${123}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, ok := token.(*integerIdentity)
+	if !ok {
+		t.Errorf("expected type '*integerIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+}
+
+func TestFloatIdentity(t *testing.T) {
+	str := "${1.123}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, ok := token.(*floatIdentity)
+	if !ok {
+		t.Errorf("expected type '*floatIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+}
+
+func TestStringIdentity(t *testing.T) {
 	str := "abc"
 	token, err := ParseExpression(str)
 	if err != nil {

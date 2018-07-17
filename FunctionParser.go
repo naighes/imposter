@@ -27,12 +27,20 @@ type integerIdentity struct {
 	value string
 }
 
+type floatIdentity struct {
+	value string
+}
+
 func (e stringIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return e.value, nil
 }
 
 func (e integerIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return strconv.Atoi(e.value)
+}
+
+func (e floatIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+	return strconv.ParseFloat(e.value, 64)
 }
 
 func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
@@ -142,7 +150,7 @@ func stringParser(str string, start int) (expression, int, error) {
 	end := start + 1
 	for {
 		if end >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, end)
+			break
 		}
 		c := str[end]
 		if c == '"' {
@@ -161,21 +169,34 @@ func stringParser(str string, start int) (expression, int, error) {
 	return e, end + 1, nil
 }
 
-func integerParser(str string, start int) (expression, int, error) {
+func numberParser(str string, start int) (expression, int, error) {
 	end := start
+	dots := 0
 	for {
 		if end >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, end)
+			break
 		}
 		c := str[end]
 		if isNumber(c) {
 			end = end + 1
 			continue
-		} else {
-			break
 		}
+		if c == '.' {
+			if dots == 0 {
+				end = end + 1
+				dots = dots + 1
+				continue
+			}
+			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, end), str, end)
+		}
+		break
 	}
-	e := &integerIdentity{value: str[start:end]}
+	var e expression
+	if dots == 0 {
+		e = &integerIdentity{value: str[start:end]}
+	} else {
+		e = &floatIdentity{value: str[start:end]}
+	}
 	return e, end, nil
 }
 
@@ -264,7 +285,7 @@ func getParser(str string, start int) (parser, int, error) {
 			return stringParser, start, nil
 		}
 		if isNumber(c) {
-			return integerParser, start, nil
+			return numberParser, start, nil
 		}
 		if c == ')' {
 			return nil, start, nil
