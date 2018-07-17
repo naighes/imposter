@@ -48,6 +48,34 @@ func TestStringIdentity(t *testing.T) {
 	}
 }
 
+func TestBooleanIdentity(t *testing.T) {
+	str := "${true}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	b, ok := token.(*booleanIdentity)
+	if !ok {
+		t.Errorf("expected type '*booleanIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	e, err := b.evaluate(make(map[string]interface{}))
+	if err != nil {
+		t.Errorf("evaluation error")
+		return
+	}
+	v, ok := e.(bool)
+	if !ok {
+		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if !v {
+		t.Errorf("expected boolean value 'true'; got '%s' instead", v)
+		return
+	}
+}
+
 func TestBlockWithJustIdentity(t *testing.T) {
 	str := "${\"abc\"}"
 	token, err := ParseExpression(str)

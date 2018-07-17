@@ -31,6 +31,10 @@ type floatIdentity struct {
 	value string
 }
 
+type booleanIdentity struct {
+	value string
+}
+
 func (e stringIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return e.value, nil
 }
@@ -41,6 +45,10 @@ func (e integerIdentity) evaluate(vars map[string]interface{}) (interface{}, err
 
 func (e floatIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
 	return strconv.ParseFloat(e.value, 64)
+}
+
+func (e booleanIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+	return strconv.ParseBool(e.value)
 }
 
 func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
@@ -272,6 +280,18 @@ func getParser(str string, start int) (parser, int, error) {
 	for {
 		if start >= len(str) {
 			return nil, -1, prettyError("unexpected end of string", str, start)
+		}
+		if len(str) >= start+4 && str[start:start+4] == "true" {
+			return func(string, int) (expression, int, error) {
+				e := &booleanIdentity{value: "true"}
+				return e, start + 4, nil
+			}, start, nil
+		}
+		if len(str) >= start+5 && str[start:start+5] == "false" {
+			return func(string, int) (expression, int, error) {
+				e := &booleanIdentity{value: "false"}
+				return e, start + 5, nil
+			}, start, nil
 		}
 		c := str[start]
 		if c == ' ' {
