@@ -20,6 +20,20 @@ func TestIdentity(t *testing.T) {
 	}
 }
 
+func TestBlockWithJustIdentity(t *testing.T) {
+	str := "${\"abc\"}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	_, ok := token.(*stringIdentity)
+	if !ok {
+		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+}
+
 func TestEmptyString(t *testing.T) {
 	str := ""
 	token, err := ParseExpression(str)

@@ -318,7 +318,16 @@ func parseArgs(str string, start int) ([]expression, int, error) {
 
 func ParseExpression(str string) (expression, error) {
 	if strings.Index(str, "${") == 0 && str[len(str)-1] == '}' {
-		e, _, err := functionParser(str[2:len(str)-1], 0)
+		str = str[2 : len(str)-1]
+		start := 0
+		p, start, err := getParser(str, start)
+		if err != nil {
+			return nil, err
+		}
+		if p == nil {
+			return nil, prettyError("could not find a parser for the current token", str, start)
+		}
+		e, start, err := p(str, start)
 		if err != nil {
 			return nil, err
 		}
