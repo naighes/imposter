@@ -61,6 +61,10 @@ func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
 		return evaluateFile(e.args, vars)
 	case "var":
 		return evaluateVar(e.args, vars)
+	case "and":
+		return evaluateAnd(e.args, vars)
+	case "or":
+		return evaluateOr(e.args, vars)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -150,6 +154,44 @@ func evaluateVar(args []expression, vars map[string]interface{}) (interface{}, e
 		return v, nil
 	}
 	return "", fmt.Errorf("evaluation error: cannot find a variable named '%s'", b)
+}
+
+func evaluateAnd(args []expression, vars map[string]interface{}) (interface{}, error) {
+	if l := len(args); l < 2 {
+		return "", fmt.Errorf("function 'and' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+	}
+	r := true
+	for _, arg := range args {
+		a, err := arg.evaluate(vars)
+		if err != nil {
+			return "", fmt.Errorf("evaluation error: %s", err)
+		}
+		b, ok := a.(bool)
+		if !ok {
+			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+		}
+		r = r && b
+	}
+	return r, nil
+}
+
+func evaluateOr(args []expression, vars map[string]interface{}) (interface{}, error) {
+	if l := len(args); l < 2 {
+		return "", fmt.Errorf("function 'or' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+	}
+	r := false
+	for _, arg := range args {
+		a, err := arg.evaluate(vars)
+		if err != nil {
+			return "", fmt.Errorf("evaluation error: %s", err)
+		}
+		b, ok := a.(bool)
+		if !ok {
+			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+		}
+		r = r || b
+	}
+	return r, nil
 }
 
 type parser func(string, int) (expression, int, error)

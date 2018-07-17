@@ -71,7 +71,63 @@ func TestBooleanIdentity(t *testing.T) {
 		return
 	}
 	if !v {
-		t.Errorf("expected boolean value 'true'; got '%s' instead", v)
+		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
+		return
+	}
+}
+
+func TestOrEvaluation(t *testing.T) {
+	str := "${or(false, true)}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	b, ok := token.(*function)
+	if !ok {
+		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	e, err := b.evaluate(make(map[string]interface{}))
+	if err != nil {
+		t.Errorf("evaluation error")
+		return
+	}
+	v, ok := e.(bool)
+	if !ok {
+		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if !v {
+		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
+		return
+	}
+}
+
+func TestAndEvaluation(t *testing.T) {
+	str := "${and(true, true)}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	b, ok := token.(*function)
+	if !ok {
+		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	e, err := b.evaluate(make(map[string]interface{}))
+	if err != nil {
+		t.Errorf("evaluation error")
+		return
+	}
+	v, ok := e.(bool)
+	if !ok {
+		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if !v {
+		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
 		return
 	}
 }
