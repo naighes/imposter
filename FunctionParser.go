@@ -11,7 +11,7 @@ import (
 )
 
 type expression interface {
-	evaluate(map[string]interface{}) (interface{}, error)
+	evaluate(map[string]interface{}, *http.Request) (interface{}, error)
 }
 
 type ifElse struct {
@@ -41,43 +41,43 @@ type booleanIdentity struct {
 	value string
 }
 
-func (e stringIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e stringIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return e.value, nil
 }
 
-func (e integerIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e integerIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.Atoi(e.value)
 }
 
-func (e floatIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e floatIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseFloat(e.value, 64)
 }
 
-func (e booleanIdentity) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e booleanIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseBool(e.value)
 }
 
-func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e function) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	switch e.name {
 	case "link":
-		return evaluateLink(e.args, vars)
+		return evaluateLink(e.args, vars, req)
 	case "redirect":
-		return evaluateRedirect(e.args, vars)
+		return evaluateRedirect(e.args, vars, req)
 	case "file":
-		return evaluateFile(e.args, vars)
+		return evaluateFile(e.args, vars, req)
 	case "var":
-		return evaluateVar(e.args, vars)
+		return evaluateVar(e.args, vars, req)
 	case "and":
-		return evaluateAnd(e.args, vars)
+		return evaluateAnd(e.args, vars, req)
 	case "or":
-		return evaluateOr(e.args, vars)
+		return evaluateOr(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
 }
 
-func (e ifElse) evaluate(vars map[string]interface{}) (interface{}, error) {
-	guard, err := e.guard.evaluate(vars)
+func (e ifElse) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	guard, err := e.guard.evaluate(vars, req)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -91,7 +91,7 @@ func (e ifElse) evaluate(vars map[string]interface{}) (interface{}, error) {
 	} else {
 		exp = e.right
 	}
-	val, err := exp.evaluate(vars)
+	val, err := exp.evaluate(vars, req)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -104,11 +104,11 @@ type HttpRsp struct {
 	StatusCode int
 }
 
-func evaluateLink(args []expression, vars map[string]interface{}) (interface{}, error) {
+func evaluateLink(args []expression, vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'link' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate(vars)
+	a, err := args[0].evaluate(vars, req)
 	if err != nil {
 		return 0, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -129,11 +129,11 @@ func evaluateLink(args []expression, vars map[string]interface{}) (interface{}, 
 	return r, nil
 }
 
-func evaluateRedirect(args []expression, vars map[string]interface{}) (interface{}, error) {
+func evaluateRedirect(args []expression, vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'redirect' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate(vars)
+	a, err := args[0].evaluate(vars, req)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %s", err)
 	}
@@ -147,11 +147,11 @@ func evaluateRedirect(args []expression, vars map[string]interface{}) (interface
 	return r, nil
 }
 
-func evaluateFile(args []expression, vars map[string]interface{}) (string, error) {
+func evaluateFile(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	if l := len(args); l != 1 {
 		return "", fmt.Errorf("function 'file' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate(vars)
+	a, err := args[0].evaluate(vars, req)
 	if err != nil {
 		return "", fmt.Errorf("evaluation error: %s", err)
 	}
@@ -166,11 +166,11 @@ func evaluateFile(args []expression, vars map[string]interface{}) (string, error
 	return string(content), nil
 }
 
-func evaluateVar(args []expression, vars map[string]interface{}) (string, error) {
+func evaluateVar(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	if l := len(args); l != 1 {
 		return "", fmt.Errorf("function 'var' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	a, err := args[0].evaluate(vars)
+	a, err := args[0].evaluate(vars, req)
 	if err != nil {
 		return "", fmt.Errorf("evaluation error: %s", err)
 	}
@@ -184,13 +184,13 @@ func evaluateVar(args []expression, vars map[string]interface{}) (string, error)
 	return "", fmt.Errorf("evaluation error: cannot find a variable named '%s'", b)
 }
 
-func evaluateAnd(args []expression, vars map[string]interface{}) (bool, error) {
+func evaluateAnd(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
 	if l := len(args); l < 2 {
 		return false, fmt.Errorf("function 'and' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
 	}
 	r := true
 	for _, arg := range args {
-		a, err := arg.evaluate(vars)
+		a, err := arg.evaluate(vars, req)
 		if err != nil {
 			return false, fmt.Errorf("evaluation error: %s", err)
 		}
@@ -203,13 +203,13 @@ func evaluateAnd(args []expression, vars map[string]interface{}) (bool, error) {
 	return r, nil
 }
 
-func evaluateOr(args []expression, vars map[string]interface{}) (bool, error) {
+func evaluateOr(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
 	if l := len(args); l < 2 {
 		return false, fmt.Errorf("function 'or' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
 	}
 	r := false
 	for _, arg := range args {
-		a, err := arg.evaluate(vars)
+		a, err := arg.evaluate(vars, req)
 		if err != nil {
 			return false, fmt.Errorf("evaluation error: %s", err)
 		}

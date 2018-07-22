@@ -22,7 +22,7 @@ func (h FuncHttpHandler) HandleFunc(parse func(string) (expression, error)) (fun
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		a, err := e.evaluate(vars)
+		a, err := e.evaluate(vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -45,8 +45,8 @@ type MatchRspHttpHandler struct {
 	Vars    map[string]interface{}
 }
 
-func evaluateToString(e expression, vars map[string]interface{}) (string, error) {
-	a, err := e.evaluate(vars)
+func evaluateToString(e expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	a, err := e.evaluate(vars, req)
 	if err != nil {
 		return "", err
 	}
@@ -79,13 +79,13 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) 
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := evaluateToString(e, vars)
+		b, err := evaluateToString(e, vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
 		for k, v := range headers {
-			v1, err := evaluateToString(v, vars)
+			v1, err := evaluateToString(v, vars, r)
 			if err != nil {
 				writeError(w, err)
 				return

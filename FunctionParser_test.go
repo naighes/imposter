@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 	"reflect"
 	"testing"
 )
@@ -60,7 +61,7 @@ func TestBooleanIdentity(t *testing.T) {
 		t.Errorf("expected type '*booleanIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}))
+	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -88,7 +89,7 @@ func TestOrEvaluation(t *testing.T) {
 		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}))
+	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -116,7 +117,7 @@ func TestAndEvaluation(t *testing.T) {
 		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}))
+	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -158,7 +159,7 @@ func TestEmptyString(t *testing.T) {
 		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	s, err := si.evaluate(make(map[string]interface{}))
+	s, err := si.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -281,7 +282,7 @@ func TestEvaluateVar(t *testing.T) {
 	vars := map[string]interface{}{
 		"a": expected,
 	}
-	e, err := token.evaluate(vars)
+	e, err := token.evaluate(vars, &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -327,7 +328,7 @@ func TestComplexIfElseStatement(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}))
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -356,7 +357,7 @@ func TestIfElseStatement(t *testing.T) {
 		t.Errorf("expected type '*ifElse'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := f.evaluate(make(map[string]interface{}))
+	e, err := f.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return

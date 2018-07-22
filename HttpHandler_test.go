@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 )
@@ -15,11 +16,11 @@ type errorExpression struct {
 	err string
 }
 
-func (e fakeExpression) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e fakeExpression) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return e.rsp, nil
 }
 
-func (e errorExpression) evaluate(vars map[string]interface{}) (interface{}, error) {
+func (e errorExpression) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return nil, fmt.Errorf(e.err)
 }
 
