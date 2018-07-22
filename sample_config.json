@@ -18,7 +18,8 @@
       "response": {
         "body": "${file(\"./main.go\")}",
         "headers": {
-          "Content-Type": "${var(\"default_content_type\")}"
+          "Content-Type": "${var(\"default_content_type\")}",
+          "Content-Language": "${if(true) \"en\" else \"it\"}"
         },
         "status_code": 200
       }

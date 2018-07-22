@@ -14,6 +14,12 @@ type expression interface {
 	evaluate(map[string]interface{}) (interface{}, error)
 }
 
+type ifElse struct {
+	guard expression
+	left  expression
+	right expression
+}
+
 type function struct {
 	name string
 	args []expression
@@ -68,6 +74,28 @@ func (e function) evaluate(vars map[string]interface{}) (interface{}, error) {
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
+}
+
+func (e ifElse) evaluate(vars map[string]interface{}) (interface{}, error) {
+	guard, err := e.guard.evaluate(vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %s", err)
+	}
+	guardValue, ok := guard.(bool)
+	if !ok {
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to bool", guard)
+	}
+	var exp expression
+	if guardValue {
+		exp = e.left
+	} else {
+		exp = e.right
+	}
+	val, err := exp.evaluate(vars)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %s", err)
+	}
+	return val, nil
 }
 
 type HttpRsp struct {
@@ -250,18 +278,6 @@ func numberParser(str string, start int) (expression, int, error) {
 	return e, end, nil
 }
 
-func isLetter(c byte) bool {
-	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
-}
-
-func isLetterOrNumber(c byte) bool {
-	return isNumber(c) || isLetter(c)
-}
-
-func isNumber(c byte) bool {
-	return (c >= '0' && c <= '9')
-}
-
 func functionParser(str string, start int) (expression, int, error) {
 	for {
 		if start >= len(str) {
@@ -314,8 +330,105 @@ func functionParser(str string, start int) (expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	t := &function{name: name, args: args}
-	return t, end, nil
+	e := &function{name: name, args: args}
+	return e, end, nil
+}
+
+func ifParser(str string, start int) (expression, int, error) {
+	start = start + 2
+	for {
+		if start >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, start)
+		}
+		c := str[start]
+		if c == ' ' {
+			start = start + 1
+			continue
+		}
+		if c == '(' {
+			break
+		} else {
+			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected '('", c, start), str, start)
+		}
+	}
+	// guard parsing
+	start = start + 1
+	guardParser, start, err := getParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	// TODO: ensure parser is not nil
+	guard, start, err := guardParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	for {
+		if start >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, start)
+		}
+		c := str[start]
+		if c == ' ' {
+			start = start + 1
+			continue
+		}
+		if c == ')' {
+			break
+		} else {
+			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, start), str, start)
+		}
+	}
+	// true condition expression parsing
+	start = start + 1
+	leftParser, start, err := getParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	// TODO: ensure parser is not nil
+	left, start, err := leftParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	// check for else
+	for {
+		if start >= len(str) {
+			return nil, -1, prettyError("unexpected end of string", str, start)
+		}
+		c := str[start]
+		if c == ' ' {
+			start = start + 1
+			continue
+		}
+		if len(str) >= start+4 && str[start:start+4] == "else" {
+			start = start + 4
+			break
+		} else {
+			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected 'else'", c, start), str, start)
+		}
+	}
+	// false condition expression parsing
+	rightParser, start, err := getParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	// TODO: ensure parser is not nil
+	right, start, err := rightParser(str, start)
+	if err != nil {
+		return nil, -1, err
+	}
+	e := &ifElse{guard: guard, left: left, right: right}
+	return e, start, nil
+}
+
+func isLetter(c byte) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
+func isLetterOrNumber(c byte) bool {
+	return isNumber(c) || isLetter(c)
+}
+
+func isNumber(c byte) bool {
+	return (c >= '0' && c <= '9')
 }
 
 func getParser(str string, start int) (parser, int, error) {
@@ -340,6 +453,9 @@ func getParser(str string, start int) (parser, int, error) {
 					e := &booleanIdentity{value: "false"}
 					return e, start + 5, nil
 				}, start, nil
+			}
+			if len(str) >= start+2 && str[start:start+2] == "if" {
+				return ifParser, start, nil
 			}
 			return functionParser, start, nil
 		}

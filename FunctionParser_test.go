@@ -319,3 +319,32 @@ func TestVarAsFunctionArg(t *testing.T) {
 		return
 	}
 }
+
+func TestIfElseStatement(t *testing.T) {
+	const expected = "correct"
+	str := fmt.Sprintf("${   if (  true   )    \"%s\"    else     \"wrong\"   }", expected)
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, ok := token.(*ifElse)
+	if !ok {
+		t.Errorf("expected type '*ifElse'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	e, err := f.evaluate(make(map[string]interface{}))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected result of type 'string'; got '%s'", reflect.TypeOf(v))
+		return
+	}
+	if v != expected {
+		t.Errorf("expected '%s'; got '%s'", expected, v)
+		return
+	}
+}
