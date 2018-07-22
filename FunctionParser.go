@@ -73,6 +73,10 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateOr(e.args, vars, req)
 	case "http_header":
 		return evaluateHttpHeader(e.args, vars, req)
+	case "eq":
+		return evaluateEq(e.args, vars, req)
+	case "ne":
+		return evaluateNe(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -241,6 +245,36 @@ func evaluateHttpHeader(args []expression, vars map[string]interface{}, req *htt
 	} else {
 		return "", fmt.Errorf("no http headers in source HTTP request")
 	}
+}
+
+func evaluateEq(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l < 2 {
+		return false, fmt.Errorf("function 'eq' is expecting two arguments; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	b, err := args[1].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	return a == b, nil
+}
+
+func evaluateNe(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l < 2 {
+		return false, fmt.Errorf("function 'eq' is expecting two arguments; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	b, err := args[1].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	return a != b, nil
 }
 
 type parser func(string, int) (expression, int, error)
