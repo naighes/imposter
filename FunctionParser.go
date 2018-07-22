@@ -278,21 +278,29 @@ func numberParser(str string, start int) (expression, int, error) {
 	return e, end, nil
 }
 
-func functionParser(str string, start int) (expression, int, error) {
+func nextToken(str string, start int, match func(byte, int) bool) (int, error) {
 	for {
 		if start >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, start)
+			return -1, prettyError("unexpected end of string", str, start)
 		}
 		c := str[start]
 		if c == ' ' {
 			start = start + 1
 			continue
 		}
-		if isLetterOrNumber(c) || c == '_' {
-			break
-		} else {
-			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, start), str, start)
+		if match(c, start) {
+			return start, nil
 		}
+		return -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d", c, start), str, start)
+	}
+}
+
+func functionParser(str string, start int) (expression, int, error) {
+	start, err := nextToken(str, start, func(c byte, s int) bool {
+		return isLetterOrNumber(c) || c == '_'
+	})
+	if err != nil {
+		return nil, -1, err
 	}
 	end := start
 	for {
@@ -310,22 +318,13 @@ func functionParser(str string, start int) (expression, int, error) {
 		return nil, -1, prettyError("expected function name", str, end)
 	}
 	name := str[start:end]
-	for {
-		if end >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, end)
-		}
-		c := str[end]
-		if c == ' ' {
-			end = end + 1
-			continue
-		}
-		if c == '(' {
-			break
-		}
-		return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d", c, end), str, end)
+	end, err = nextToken(str, end, func(c byte, s int) bool {
+		return c == '('
+	})
+	if err != nil {
+		return nil, -1, err
 	}
 	var args []expression
-	var err error
 	args, end, err = parseArgs(str, end+1)
 	if err != nil {
 		return nil, -1, err
@@ -335,23 +334,14 @@ func functionParser(str string, start int) (expression, int, error) {
 }
 
 func ifParser(str string, start int) (expression, int, error) {
+	var err error
 	start = start + 2
-	for {
-		if start >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, start)
-		}
-		c := str[start]
-		if c == ' ' {
-			start = start + 1
-			continue
-		}
-		if c == '(' {
-			break
-		} else {
-			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected '('", c, start), str, start)
-		}
+	start, err = nextToken(str, start, func(c byte, s int) bool {
+		return c == '('
+	})
+	if err != nil {
+		return nil, -1, err
 	}
-	// guard parsing
 	start = start + 1
 	guardParser, start, err := getParser(str, start)
 	if err != nil {
@@ -362,22 +352,12 @@ func ifParser(str string, start int) (expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	for {
-		if start >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, start)
-		}
-		c := str[start]
-		if c == ' ' {
-			start = start + 1
-			continue
-		}
-		if c == ')' {
-			break
-		} else {
-			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected ')'", c, start), str, start)
-		}
+	start, err = nextToken(str, start, func(c byte, s int) bool {
+		return c == ')'
+	})
+	if err != nil {
+		return nil, -1, err
 	}
-	// true condition expression parsing
 	start = start + 1
 	leftParser, start, err := getParser(str, start)
 	if err != nil {
@@ -389,23 +369,13 @@ func ifParser(str string, start int) (expression, int, error) {
 		return nil, -1, err
 	}
 	// check for else
-	for {
-		if start >= len(str) {
-			return nil, -1, prettyError("unexpected end of string", str, start)
-		}
-		c := str[start]
-		if c == ' ' {
-			start = start + 1
-			continue
-		}
-		if len(str) >= start+4 && str[start:start+4] == "else" {
-			start = start + 4
-			break
-		} else {
-			return nil, -1, prettyError(fmt.Sprintf("unexpected token '%c' at position %d: expected 'else'", c, start), str, start)
-		}
+	start, err = nextToken(str, start, func(c byte, s int) bool {
+		return len(str) >= s+4 && str[s:s+4] == "else"
+	})
+	if err != nil {
+		return nil, -1, err
 	}
-	// false condition expression parsing
+	start = start + 4
 	rightParser, start, err := getParser(str, start)
 	if err != nil {
 		return nil, -1, err
