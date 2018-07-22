@@ -320,6 +320,29 @@ func TestVarAsFunctionArg(t *testing.T) {
 	}
 }
 
+func TestComplexIfElseStatement(t *testing.T) {
+	str := fmt.Sprintf("${ and  (  if (  true   )    true    else     false  , true) }")
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}))
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(bool)
+	if !ok {
+		t.Errorf("expected result of type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if v != true {
+		t.Errorf("expected true; got '%t'", v)
+		return
+	}
+}
+
 func TestIfElseStatement(t *testing.T) {
 	const expected = "correct"
 	str := fmt.Sprintf("${   if (  true   )    \"%s\"    else     \"wrong\"   }", expected)

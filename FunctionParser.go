@@ -166,7 +166,7 @@ func evaluateFile(args []expression, vars map[string]interface{}) (string, error
 	return string(content), nil
 }
 
-func evaluateVar(args []expression, vars map[string]interface{}) (interface{}, error) {
+func evaluateVar(args []expression, vars map[string]interface{}) (string, error) {
 	if l := len(args); l != 1 {
 		return "", fmt.Errorf("function 'var' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
@@ -179,43 +179,43 @@ func evaluateVar(args []expression, vars map[string]interface{}) (interface{}, e
 		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
 	}
 	if v, ok := vars[b]; ok {
-		return v, nil
+		return v.(string), nil
 	}
 	return "", fmt.Errorf("evaluation error: cannot find a variable named '%s'", b)
 }
 
-func evaluateAnd(args []expression, vars map[string]interface{}) (interface{}, error) {
+func evaluateAnd(args []expression, vars map[string]interface{}) (bool, error) {
 	if l := len(args); l < 2 {
-		return "", fmt.Errorf("function 'and' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+		return false, fmt.Errorf("function 'and' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
 	}
 	r := true
 	for _, arg := range args {
 		a, err := arg.evaluate(vars)
 		if err != nil {
-			return "", fmt.Errorf("evaluation error: %s", err)
+			return false, fmt.Errorf("evaluation error: %s", err)
 		}
 		b, ok := a.(bool)
 		if !ok {
-			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
 		}
 		r = r && b
 	}
 	return r, nil
 }
 
-func evaluateOr(args []expression, vars map[string]interface{}) (interface{}, error) {
+func evaluateOr(args []expression, vars map[string]interface{}) (bool, error) {
 	if l := len(args); l < 2 {
-		return "", fmt.Errorf("function 'or' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+		return false, fmt.Errorf("function 'or' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
 	}
 	r := false
 	for _, arg := range args {
 		a, err := arg.evaluate(vars)
 		if err != nil {
-			return "", fmt.Errorf("evaluation error: %s", err)
+			return false, fmt.Errorf("evaluation error: %s", err)
 		}
 		b, ok := a.(bool)
 		if !ok {
-			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
 		}
 		r = r || b
 	}
