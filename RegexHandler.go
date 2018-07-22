@@ -24,7 +24,7 @@ type regexRoute struct {
 func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
 		// TODO: host and X-Forwarded-Host
-		if route.pattern.MatchString(r.URL.Path) && r.Method == route.method {
+		if route.pattern.MatchString(r.URL.Path) && (r.Method == route.method || route.method == "*") {
 			if route.latency > 0 {
 				time.Sleep(route.latency * time.Millisecond)
 			}
@@ -78,11 +78,11 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 
 func getMethod(def *MatchDef) (string, error) {
 	if def.Method == "" {
-		return "GET", nil
+		return "*", nil
 	}
 	m := strings.ToUpper(def.Method)
 	switch m {
-	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE":
+	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "*":
 		return m, nil
 	default:
 		return "", fmt.Errorf("HTTP method '%s' is not supported", m)
