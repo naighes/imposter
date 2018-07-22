@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 	"testing"
 )
@@ -390,6 +391,25 @@ func TestEvaluateHttpHeader(t *testing.T) {
 		return
 	}
 	if e != expected {
+		t.Errorf("expected value '%s'; got '%v'", expected, e)
+		return
+	}
+}
+
+func TestRequestURL(t *testing.T) {
+	expected, _ := url.Parse("https://examp.lecom/foo?bar=buzz")
+	str := "${request_url()}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{URL: expected})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if e != expected.String() {
 		t.Errorf("expected value '%s'; got '%v'", expected, e)
 		return
 	}

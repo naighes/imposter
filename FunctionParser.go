@@ -79,6 +79,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateNe(e.args, vars, req)
 	case "contains":
 		return evaluateContains(e.args, vars, req)
+	case "request_url":
+		return evaluateRequestURL(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -301,6 +303,13 @@ func evaluateContains(args []expression, vars map[string]interface{}, req *http.
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
 	}
 	return strings.Index(left, right) != -1, nil
+}
+
+func evaluateRequestURL(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	if l := len(args); l != 0 {
+		return "", fmt.Errorf("function 'request_url' is expecting no arguments; found %d argument(s) instead", l)
+	}
+	return req.URL.String(), nil
 }
 
 type parser func(string, int) (expression, int, error)
