@@ -372,3 +372,25 @@ func TestIfElseStatement(t *testing.T) {
 		return
 	}
 }
+
+func TestEvaluateHttpHeader(t *testing.T) {
+	const expected = "application/json"
+	str := "${http_header(\"Content-Type\")}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	headers := http.Header{
+		"Content-Type": []string{expected},
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Header: headers})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if e != expected {
+		t.Errorf("expected value '%s'; got '%v'", expected, e)
+		return
+	}
+}

@@ -71,6 +71,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateAnd(e.args, vars, req)
 	case "or":
 		return evaluateOr(e.args, vars, req)
+	case "http_header":
+		return evaluateHttpHeader(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -220,6 +222,25 @@ func evaluateOr(args []expression, vars map[string]interface{}, req *http.Reques
 		r = r || b
 	}
 	return r, nil
+}
+
+func evaluateHttpHeader(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	if l := len(args); l != 1 {
+		return "", fmt.Errorf("function 'http_header' is expecting one argument of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return "", fmt.Errorf("evaluation error: %s", err)
+	}
+	b, ok := a.(string)
+	if !ok {
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	if h := req.Header; h != nil {
+		return req.Header.Get(b), nil
+	} else {
+		return "", fmt.Errorf("no http headers in source HTTP request")
+	}
 }
 
 type parser func(string, int) (expression, int, error)

@@ -19,7 +19,8 @@
         "body": "${file(\"./main.go\")}",
         "headers": {
           "Content-Type": "${var(\"default_content_type\")}",
-          "Content-Language": "${if(true) \"en\" else \"it\"}"
+          "Content-Language": "${if(true) \"en\" else \"it\"}",
+          "Cache-Control": "${http_header(\"Cache-Control\")}"
         },
         "status_code": 200
       }
