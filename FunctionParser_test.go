@@ -414,3 +414,26 @@ func TestRequestURL(t *testing.T) {
 		return
 	}
 }
+
+func TestRegexMatch(t *testing.T) {
+	str := "${regex_match(\"Hello, world!\", \"^.*world.*$\")}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(bool)
+	if !ok {
+		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if !v {
+		t.Errorf("expected value '%t'; got '%t'", true, v)
+		return
+	}
+}

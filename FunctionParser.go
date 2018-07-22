@@ -80,6 +80,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateContains(e.args, vars, req)
 	case "request_url":
 		return evaluateRequestURL(e.args, vars, req)
+	case "regex_match":
+		return evaluateRegexMatch(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}

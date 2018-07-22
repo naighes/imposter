@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"regexp"
 	"strings"
 )
 
@@ -203,4 +204,32 @@ func evaluateRequestURL(args []expression, vars map[string]interface{}, req *htt
 		return "", fmt.Errorf("function 'request_url' is expecting no arguments; found %d argument(s) instead", l)
 	}
 	return req.URL.String(), nil
+}
+
+func evaluateRegexMatch(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l < 2 {
+		return false, fmt.Errorf("function 'regex_match' is expecting two arguments of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	var ok bool
+	var left string
+	if left, ok = a.(string); !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	b, err := args[1].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	var right string
+	if right, ok = b.(string); !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	reg, err := regexp.Compile(right)
+	if err != nil {
+		return false, err
+	}
+	return reg.MatchString(left), nil
 }
