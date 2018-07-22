@@ -323,24 +323,24 @@ func getParser(str string, start int) (parser, int, error) {
 		if start >= len(str) {
 			return nil, -1, prettyError("unexpected end of string", str, start)
 		}
-		if len(str) >= start+4 && str[start:start+4] == "true" {
-			return func(string, int) (expression, int, error) {
-				e := &booleanIdentity{value: "true"}
-				return e, start + 4, nil
-			}, start, nil
-		}
-		if len(str) >= start+5 && str[start:start+5] == "false" {
-			return func(string, int) (expression, int, error) {
-				e := &booleanIdentity{value: "false"}
-				return e, start + 5, nil
-			}, start, nil
-		}
 		c := str[start]
 		if c == ' ' {
 			start = start + 1
 			continue
 		}
 		if isLetter(c) {
+			if len(str) >= start+4 && str[start:start+4] == "true" {
+				return func(string, int) (expression, int, error) {
+					e := &booleanIdentity{value: "true"}
+					return e, start + 4, nil
+				}, start, nil
+			}
+			if len(str) >= start+5 && str[start:start+5] == "false" {
+				return func(string, int) (expression, int, error) {
+					e := &booleanIdentity{value: "false"}
+					return e, start + 5, nil
+				}, start, nil
+			}
 			return functionParser, start, nil
 		}
 		if c == '"' {
