@@ -346,7 +346,7 @@ func TestComplexIfElseStatement(t *testing.T) {
 
 func TestIfElseStatement(t *testing.T) {
 	const expected = "correct"
-	str := fmt.Sprintf("${   if (  true   )    \"%s\"    else     \"wrong\"   }", expected)
+	str := fmt.Sprintf("${   if (  contains(\"Hello, world!\", \"world\")   )    \"%s\"    else     \"wrong\"   }", expected)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)

@@ -77,6 +77,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateEq(e.args, vars, req)
 	case "ne":
 		return evaluateNe(e.args, vars, req)
+	case "contains":
+		return evaluateContains(e.args, vars, req)
 	default:
 		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
 	}
@@ -275,6 +277,30 @@ func evaluateNe(args []expression, vars map[string]interface{}, req *http.Reques
 		return false, fmt.Errorf("evaluation error: %s", err)
 	}
 	return a != b, nil
+}
+
+func evaluateContains(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l < 2 {
+		return false, fmt.Errorf("function 'contains' is expecting two arguments of type 'string'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	var ok bool
+	var left string
+	if left, ok = a.(string); !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	b, err := args[1].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	var right string
+	if right, ok = b.(string); !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+	}
+	return strings.Index(left, right) != -1, nil
 }
 
 type parser func(string, int) (expression, int, error)
