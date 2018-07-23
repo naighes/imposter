@@ -78,7 +78,7 @@ For example, you can define it in a computed manner:
 ```yaml
 pattern_list:
 - pattern: "^/myredirect$"
-  response: ${redirect("http://examp.lecome/foo")}
+  response: ${redirect("http://examp.lecom/foo")}
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
@@ -133,7 +133,8 @@ The supported built-in functions are:
  * `eq(arg1: any, arg2: any) -> bool` - Determines whether the two specified arguments are equal.
  * `ne(arg1: any, arg2: any) -> bool` - Determines whether the two specified arguments are not equal.
  * `contains(source: string, value: string) -> bool` - Determines whether `value` substring occurs within this `source` string.
- * `request_url() -> string` - Returns the URL of the current request.
+ * `request_url() -> string` - Returns the URL for the current request.
+ * `request_url_path() -> string` - Returns the path component of the URL for the current request.
  * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name`.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.

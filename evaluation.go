@@ -248,3 +248,10 @@ func evaluateRegexMatch(args []expression, vars map[string]interface{}, req *htt
 	}
 	return reg.MatchString(left), nil
 }
+
+func evaluateRequestURLPath(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	if l := len(args); l != 0 {
+		return "", fmt.Errorf("function 'request_url_path' is expecting no arguments; found %d argument(s) instead", l)
+	}
+	return req.URL.Path, nil
+}
