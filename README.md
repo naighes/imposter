@@ -41,6 +41,16 @@ We're going to write our first configuration now to launch an instance with a si
 }
 ```
 
+A YAML parser is available as well and you can write your configuration by YAML syntax as well:
+
+```yaml
+pattern_list:
+- pattern: "^.*$"
+  response:
+    body: Hello, default body!
+    status_code: 200
+```
+
 `pattern_list` is a list of _rules_ defining how **imposter** will handle incoming requests. Every rule requires a `pattern` at least. That is, if an incoming request URL matches one of the regex patterns the corrisponding `response` is served.  
 By default every rule matches against every HTTP method, but you can overwrite that by using the `method` property:
 
@@ -65,13 +75,10 @@ Rules are tested in the order they were added to the `pattern_list` collection. 
 There are two ways of definng a response object and it basically depends on the level of granularity you really need.  
 For example, you can define it in a computed manner:
 
-```json
-{
-  "pattern_list" : [{
-    "pattern": "^/myredirect$",
-    "response": "${redirect(\"http://examp.lecome/foo\")}"
-  }]
-}
+```yaml
+pattern_list:
+- pattern: "^/myredirect$"
+  response: ${redirect("http://examp.lecome/foo")
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
@@ -102,17 +109,13 @@ That will match the URL path `/posts` when an HTTP request will be issued by the
 Input variables serve as parameters for built-in functions.  
 Example:  
 
-```json
-{
-  "pattern_list" : [{
-    "pattern": "^/posts$",
-    "method": "POST",
-    "response": "${redirect(var(\"imposter_link\"))}"
-  }],
-  "vars": {
-    "imposter_link": "https://github.com/naighes/imposter"
-  }
-}
+```yaml
+pattern_list:
+- pattern: "^/posts$"
+  method: POST
+  response: ${redirect(var("imposter_link"))
+vars:
+  imposter_link: http://localhost:8080/aaa
 ```
 
 ### Built-in functions
@@ -148,20 +151,14 @@ if (<boolean_expression>) <expression> else <expression>
 
 **Example**:  
 
-```json
-{
-  "pattern_list" : [{
-    "pattern": "^/myfile$",
-    "response": {
-      "body": "testing if statement",
-      "headers": {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Content-Language": "${if(contains(http_header(\"Accept-Language\"), \"en\")) \"en\" else \"it\"}"
-      },
-      "status_code": 200
-    }
-  }]
-}
+```yaml
+pattern_list:
+- pattern: "^/myfile$"
+  body: testing if statement
+  headers:
+    Content-Type: text/plain; charset=utf-8
+    Content-Language: ${if(contains(http_header("Accept-Language"), "en")) "en" else "it"}
+  status_code: 200
 ```
 
 ## License
