@@ -107,7 +107,9 @@ func TestOrEvaluation(t *testing.T) {
 }
 
 func TestAndEvaluation(t *testing.T) {
-	str := "${and(true, true)}"
+	str := `${
+				and(true, 
+					true)}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -135,7 +137,7 @@ func TestAndEvaluation(t *testing.T) {
 }
 
 func TestBlockWithJustIdentity(t *testing.T) {
-	str := "${\"abc\"}"
+	str := `${"abc"}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -177,7 +179,12 @@ func TestEmptyString(t *testing.T) {
 }
 
 func TestFunctionWithArguments(t *testing.T) {
-	str := "${  f  (  \"12345\"  ,    987   )  }"
+	str := `${
+				f(
+					"12345" , 
+					987
+				) 
+			}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -232,7 +239,14 @@ func TestFunctionWithoutArguments(t *testing.T) {
 
 func TestNestedFunctions(t *testing.T) {
 	const expectedFuncName = "func"
-	str := fmt.Sprintf("${  %s  (  \"12345\"  ,      g  (   987   )   )  }", expectedFuncName)
+	str := fmt.Sprintf(`${
+							%s(
+								"12345",
+								g(
+									987
+								)
+							)
+						}`, expectedFuncName)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -274,7 +288,7 @@ func TestNestedFunctions(t *testing.T) {
 
 func TestEvaluateVar(t *testing.T) {
 	const expected = "hello"
-	str := "${  var  (  \"a\"    )  }"
+	str := `${  var  (  "a"    )  }`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -296,7 +310,7 @@ func TestEvaluateVar(t *testing.T) {
 
 func TestVarAsFunctionArg(t *testing.T) {
 	const expectedFuncName = "link"
-	str := fmt.Sprintf("${%s(var(\"some_link\"))}", expectedFuncName)
+	str := fmt.Sprintf(`${%s(var("some_link"))}`, expectedFuncName)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -323,7 +337,12 @@ func TestVarAsFunctionArg(t *testing.T) {
 }
 
 func TestComplexIfElseStatement(t *testing.T) {
-	str := fmt.Sprintf("${ and  (  if (  not(eq(\"hello\", \"world\") )  )    true    else     false  , true) }")
+	str := fmt.Sprintf(`${and(
+							if(not(eq("hello", "world")))
+								true
+							else
+								false,
+							true)}`)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -347,7 +366,12 @@ func TestComplexIfElseStatement(t *testing.T) {
 
 func TestIfElseStatement(t *testing.T) {
 	const expected = "correct"
-	str := fmt.Sprintf("${   if (  contains(\"Hello, world!\", \"world\")   )    \"%s\"    else     \"wrong\"   }", expected)
+	str := fmt.Sprintf(`${
+							if (contains("Hello, world!", "world"))
+								"%s"
+							else
+								"wrong"
+						}`, expected)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -376,7 +400,7 @@ func TestIfElseStatement(t *testing.T) {
 
 func TestEvaluateHttpHeader(t *testing.T) {
 	const expected = "application/json"
-	str := "${http_header(\"Content-Type\")}"
+	str := `${http_header("Content-Type")}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
@@ -416,7 +440,8 @@ func TestRequestURL(t *testing.T) {
 }
 
 func TestRegexMatch(t *testing.T) {
-	str := "${regex_match(\"Hello, world!\", \"^.*world.*$\")}"
+	str := `${regex_match("Hello, world!",
+							"^.*world.*$")}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)

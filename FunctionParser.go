@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"math"
@@ -179,7 +180,7 @@ func nextToken(str string, start int, match func(byte, int) bool) (int, error) {
 			return -1, prettyError("unexpected end of string", str, start)
 		}
 		c := str[start]
-		if c == ' ' {
+		if c == ' ' || c == '\n' || c == '\t' {
 			start = start + 1
 			continue
 		}
@@ -302,7 +303,7 @@ func getParser(str string, start int) (parser, int, error) {
 			return nil, -1, prettyError("unexpected end of string", str, start)
 		}
 		c := str[start]
-		if c == ' ' {
+		if c == ' ' || c == '\n' || c == '\t' {
 			start = start + 1
 			continue
 		}
@@ -365,7 +366,7 @@ func parseArgs(str string, start int) ([]expression, int, error) {
 				hasToken = false
 				break
 			}
-			if c == ' ' {
+			if c == ' ' || c == '\n' || c == '\t' {
 				continue
 			}
 			if c != ',' {
@@ -410,17 +411,27 @@ func prettyError(err string, str string, position int) error {
 	b.WriteString(err)
 	b.WriteString("\n")
 	if l > 0 {
-		b.WriteString("...")
-		l = l - 3
+		b.WriteString("...\n")
 	}
-	b.WriteString(s)
+	scanner := bufio.NewScanner(strings.NewReader(s))
+	acc := l
+	for scanner.Scan() {
+		token := scanner.Text()
+		b.WriteString(token)
+		b.WriteString("\n")
+		start := acc
+		end := acc + len(token) + 1
+		if start < position && end > position {
+			for i := acc; i < position; i++ {
+				b.WriteString(" ")
+			}
+			b.WriteString("^")
+			b.WriteString("\n")
+		}
+		acc = end
+	}
 	if r < len(str)-1 {
 		b.WriteString("...")
 	}
-	b.WriteString("\n")
-	for i := l; i < position; i++ {
-		b.WriteString(" ")
-	}
-	b.WriteString("^")
 	return fmt.Errorf(b.String())
 }
