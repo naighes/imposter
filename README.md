@@ -78,7 +78,7 @@ For example, you can define it in a computed manner:
 ```yaml
 pattern_list:
 - pattern: "^/myredirect$"
-  response: ${redirect("http://examp.lecome/foo")
+  response: ${redirect("http://examp.lecome/foo")}
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
@@ -113,7 +113,7 @@ Example:
 pattern_list:
 - pattern: "^/posts$"
   method: POST
-  response: ${redirect(var("imposter_link"))
+  response: ${redirect(var("imposter_link"))}
 vars:
   imposter_link: http://localhost:8080/aaa
 ```
@@ -157,7 +157,12 @@ pattern_list:
   body: testing if statement
   headers:
     Content-Type: text/plain; charset=utf-8
-    Content-Language: ${if(contains(http_header("Accept-Language"), "en")) "en" else "it"}
+    Content-Language: ${
+      if(contains(http_header("Accept-Language"), "en"))
+        "en"
+      else
+        "it"
+    }
   status_code: 200
 ```
 
