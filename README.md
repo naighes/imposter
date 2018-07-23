@@ -1,5 +1,7 @@
 # naighes/imposter
 
+![Imposter Logo](https://raw.githubusercontent.com/naighes/imposter/master/readme_files/logo.png)
+
 **Imposter** is a lightweight and versatile tool for the mocking of web applications.
 
 ## Source
