@@ -115,7 +115,7 @@ pattern_list:
   method: POST
   response: ${redirect(var("imposter_link"))}
 vars:
-  imposter_link: http://localhost:8080/aaa
+  imposter_link: https://github.com/naighes/imposter
 ```
 
 ### Built-in functions
