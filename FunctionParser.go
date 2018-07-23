@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -41,6 +42,10 @@ type booleanIdentity struct {
 	value string
 }
 
+type arrayIdentity struct {
+	elements []expression
+}
+
 func (e stringIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return e.value, nil
 }
@@ -55,6 +60,24 @@ func (e floatIdentity) evaluate(vars map[string]interface{}, req *http.Request) 
 
 func (e booleanIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseBool(e.value)
+}
+
+func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	var r []interface{}
+	var t reflect.Type
+	for index, element := range e.elements {
+		a, err := element.evaluate(vars, req)
+		if err != nil {
+			return nil, fmt.Errorf("evaluation error: %s", err)
+		}
+		if index > 0 && t != reflect.TypeOf(a) {
+			return nil, fmt.Errorf("evaluation error: mixed type arrays are not allowed")
+		}
+		t = reflect.TypeOf(a)
+		r = append(r, a)
+	}
+
+	return r, nil
 }
 
 func (e function) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
@@ -223,7 +246,7 @@ func functionParser(str string, start int) (expression, int, error) {
 		return nil, -1, err
 	}
 	var args []expression
-	args, end, err = parseArgs(str, end+1)
+	args, end, err = parseArgs(str, end+1, ')')
 	if err != nil {
 		return nil, -1, err
 	}
@@ -287,6 +310,16 @@ func ifParser(str string, start int) (expression, int, error) {
 	return e, start, nil
 }
 
+func arrayParser(str string, start int) (expression, int, error) {
+	start = start + 1
+	args, end, err := parseArgs(str, start, ']')
+	if err != nil {
+		return nil, -1, err
+	}
+	e := &arrayIdentity{elements: args}
+	return e, end, nil
+}
+
 func isLetter(c byte) bool {
 	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
 }
@@ -333,6 +366,9 @@ func getParser(str string, start int) (parser, int, error) {
 		if isNumber(c) {
 			return numberParser, start, nil
 		}
+		if c == '[' {
+			return arrayParser, start, nil
+		}
 		if c == ')' {
 			return nil, start, nil
 		}
@@ -340,7 +376,7 @@ func getParser(str string, start int) (parser, int, error) {
 	}
 }
 
-func parseArgs(str string, start int) ([]expression, int, error) {
+func parseArgs(str string, start int, endToken byte) ([]expression, int, error) {
 	var r []expression
 	hasToken := true
 	for hasToken {
@@ -364,7 +400,7 @@ func parseArgs(str string, start int) ([]expression, int, error) {
 			}
 			c := str[start]
 			start = start + 1
-			if c == ')' {
+			if c == endToken {
 				hasToken = false
 				break
 			}

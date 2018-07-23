@@ -1,9 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"reflect"
+	"strings"
+
+	"github.com/spf13/cast"
 )
 
 type HttpHandler interface {
@@ -54,11 +58,13 @@ func evaluateToString(e expression, vars map[string]interface{}, req *http.Reque
 	if err != nil {
 		return "", err
 	}
-	b, ok := a.(string)
-	if !ok {
-		return "", fmt.Errorf("expected a value of type string; got '%s' instead", reflect.TypeOf(a))
+	if b, ok := a.(string); ok {
+		return b, nil
 	}
-	return b, nil
+	if b, err := cast.ToStringE(a); err == nil {
+		return b, nil
+	}
+	return interfaceToString(a)
 }
 
 func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error) {
@@ -103,4 +109,25 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) 
 		}
 		fmt.Fprintf(w, b)
 	}, nil
+}
+
+// TODO: due to the lack of toString method in golang
+func interfaceToString(i interface{}) (string, error) {
+	a, ok := i.([]interface{})
+	if !ok {
+		return "", nil // TODO
+	}
+	var r []string
+	for _, v := range a {
+		e, err := cast.ToStringE(v)
+		if err != nil {
+			return "", fmt.Errorf("%v", err)
+		}
+		r = append(r, e)
+	}
+	var buffer bytes.Buffer
+	buffer.WriteString("[")
+	buffer.WriteString(strings.Join(r, ","))
+	buffer.WriteString("]")
+	return buffer.String(), nil
 }

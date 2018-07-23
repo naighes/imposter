@@ -1,5 +1,11 @@
 ---
 pattern_list:
+- pattern: "^/myarray$"
+  response:
+    body: ${["Hello", " world!"]}
+    headers:
+      Content-Type: text/plain; charset=utf-8
+    status_code: 200
 - pattern: "^/mypost$"
   method: POST
   latency: 2000

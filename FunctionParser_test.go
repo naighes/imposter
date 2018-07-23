@@ -78,6 +78,53 @@ func TestBooleanIdentity(t *testing.T) {
 	}
 }
 
+func TestArrayIdentity(t *testing.T) {
+	str := "${[123, 456]}"
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, ok := token.(*arrayIdentity)
+	if !ok {
+		t.Errorf("expected type '*arrayIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	e, err := f.evaluate(make(map[string]interface{}), &http.Request{})
+	if err != nil {
+		t.Errorf("evaluation error: %v", err)
+		return
+	}
+	v, ok := e.([]interface{})
+	if !ok {
+		t.Errorf("expected type '[]interface{}'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if l := len(v); l != 2 {
+		t.Errorf("expected array of length 2; got '%s'", l)
+		return
+	}
+}
+
+func TestMixedTypeArrayIdentity(t *testing.T) {
+	str := `${[123, "hello"]}`
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	f, ok := token.(*arrayIdentity)
+	if !ok {
+		t.Errorf("expected type '*arrayIdentity'; got '%s'", reflect.TypeOf(token))
+		return
+	}
+	_, err = f.evaluate(make(map[string]interface{}), &http.Request{})
+	if err == nil {
+		t.Errorf("expected error")
+		return
+	}
+}
+
 func TestOrEvaluation(t *testing.T) {
 	str := "${or(false, true)}"
 	token, err := ParseExpression(str)
