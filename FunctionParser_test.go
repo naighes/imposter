@@ -323,7 +323,7 @@ func TestVarAsFunctionArg(t *testing.T) {
 }
 
 func TestComplexIfElseStatement(t *testing.T) {
-	str := fmt.Sprintf("${ and  (  if (  ne(\"hello\", \"world\")   )    true    else     false  , true) }")
+	str := fmt.Sprintf("${ and  (  if (  not(eq(\"hello\", \"world\") )  )    true    else     false  , true) }")
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)

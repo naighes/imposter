@@ -70,6 +70,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateAnd(e.args, vars, req)
 	case "or":
 		return evaluateOr(e.args, vars, req)
+	case "not":
+		return evaluateNot(e.args, vars, req)
 	case "http_header":
 		return evaluateHttpHeader(e.args, vars, req)
 	case "eq":

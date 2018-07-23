@@ -35,7 +35,11 @@ func (h FuncHttpHandler) HandleFunc(parse func(string) (expression, error)) (fun
 		for k, _ := range rsp.Headers {
 			w.Header().Set(k, rsp.Headers.Get(k))
 		}
-		w.WriteHeader(rsp.StatusCode)
+		if rsp.StatusCode > 0 {
+			w.WriteHeader(rsp.StatusCode)
+		} else {
+			w.WriteHeader(200)
+		}
 		fmt.Fprintf(w, rsp.Body)
 	}, nil
 }
@@ -92,7 +96,11 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) 
 			}
 			w.Header().Set(k, v1)
 		}
-		w.WriteHeader(rsp.StatusCode)
+		if rsp.StatusCode > 0 {
+			w.WriteHeader(rsp.StatusCode)
+		} else {
+			w.WriteHeader(200)
+		}
 		fmt.Fprintf(w, b)
 	}, nil
 }

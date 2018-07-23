@@ -126,6 +126,21 @@ func evaluateOr(args []expression, vars map[string]interface{}, req *http.Reques
 	return r, nil
 }
 
+func evaluateNot(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l != 1 {
+		return false, fmt.Errorf("function 'not' is expecting one argument of type 'boolean'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	b, ok := a.(bool)
+	if !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+	}
+	return !b, nil
+}
+
 func evaluateHttpHeader(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	if l := len(args); l != 1 {
 		return "", fmt.Errorf("function 'http_header' is expecting one argument of type 'string'; found %d argument(s) instead", l)
