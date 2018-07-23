@@ -41,7 +41,7 @@ We're going to write our first configuration now to launch an instance with a si
 }
 ```
 
-A YAML parser is available as well and you can write your configuration by YAML syntax as well:
+A YAML parser is also available and you can write your configuration by YAML syntax as well:
 
 ```yaml
 pattern_list:
