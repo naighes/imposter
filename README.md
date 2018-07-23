@@ -161,3 +161,7 @@ if (<boolean_expression>) <expression> else <expression>
   }]
 }
 ```
+
+## License
+
+MIT licensed. See the LICENSE file for details.
