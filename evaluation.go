@@ -275,3 +275,10 @@ func evaluateRequestURLQuery(args []expression, vars map[string]interface{}, req
 		return "", fmt.Errorf("function 'request_url_query' is expecting one or no arguments; found %d argument(s) instead", l)
 	}
 }
+
+func evaluateRequestHTTPMethod(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	if l := len(args); l != 0 {
+		return "", fmt.Errorf("function 'request_http_method' is expecting no arguments; found %d argument(s) instead", l)
+	}
+	return req.Method, nil
+}

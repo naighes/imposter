@@ -18,10 +18,10 @@ type ConfigOptions struct {
 }
 
 type MatchDef struct {
-	Pattern  string        `json:"pattern" yaml:"pattern"`
-	Method   string        `json:"method" yaml:"method"`
-	Latency  time.Duration `json:"latency" yaml:"latency"`
-	Response interface{}   `json:"response" yaml:"response"`
+	RuleExpression string        `json:"rule_expression" yaml:"rule_expression"`
+	Method         string        `json:"method" yaml:"method"`
+	Latency        time.Duration `json:"latency" yaml:"latency"`
+	Response       interface{}   `json:"response" yaml:"response"`
 }
 
 type MatchRsp struct {

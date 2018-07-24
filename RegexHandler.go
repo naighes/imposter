@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"regexp"
+	"reflect"
 	"strings"
 	"time"
 
@@ -12,19 +12,30 @@ import (
 
 type RegexHandler struct {
 	routes []*regexRoute
+	vars   map[string]interface{}
 }
 
 type regexRoute struct {
-	pattern *regexp.Regexp
-	method  string
-	latency time.Duration
-	handler http.Handler
+	expression expression
+	method     string
+	latency    time.Duration
+	handler    http.Handler
 }
 
 func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
-		// TODO: host and X-Forwarded-Host
-		if route.pattern.MatchString(r.URL.Path) && (r.Method == route.method || route.method == "*") {
+		// TODO: X-Forwarded-Host?
+		a, err := route.expression.evaluate(handler.vars, r)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		b, ok := a.(bool)
+		if !ok {
+			writeError(w, fmt.Errorf("rule_expression requires a boolean expression: found %v instead", reflect.TypeOf(a)))
+			return
+		}
+		if b {
 			if route.latency > 0 {
 				time.Sleep(route.latency * time.Millisecond)
 			}
@@ -36,12 +47,11 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *RegexHandler) addRoute(pattern *regexp.Regexp, method string, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
-	handler.routes = append(handler.routes, &regexRoute{pattern, method, latency, http.HandlerFunc(h)})
+func (handler *RegexHandler) addRoute(expression expression, method string, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+	handler.routes = append(handler.routes, &regexRoute{expression, method, latency, http.HandlerFunc(h)})
 }
 
 func NewRegexHandler(config *Config) (*RegexHandler, error) {
-	r := RegexHandler{}
 	defs := config.Defs
 	var options *ConfigOptions
 	if config.Options == nil {
@@ -55,8 +65,13 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	} else {
 		vars = config.Vars
 	}
+	r := RegexHandler{}
+	r.vars = vars
 	for _, def := range defs {
-		reg, err := regexp.Compile(def.Pattern)
+		reg, err := ParseExpression(def.RuleExpression)
+		if err != nil {
+			return nil, err
+		}
 		if err != nil {
 			return nil, err
 		}

@@ -529,11 +529,37 @@ func TestQuery(t *testing.T) {
 	}
 	v, ok := e.(string)
 	if !ok {
-		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		t.Errorf("expected type 'string'; got '%v'", reflect.TypeOf(e))
 		return
 	}
 	if v != query {
 		t.Errorf("expected value '%s'; got '%s'", query, v)
+		return
+	}
+}
+
+func TestHTTPMethod(t *testing.T) {
+	str := `${if (eq(request_http_method(), "GET"))
+					"ok"
+				else
+					"wrong"}`
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Method: "GET"})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected type 'string'; got '%v'", reflect.TypeOf(e))
+		return
+	}
+	if v != "ok" {
+		t.Errorf("expected value '%s'; got '%s'", "ok", v)
 		return
 	}
 }

@@ -32,7 +32,7 @@ We're going to write our first configuration now to launch an instance with a si
 ```json
 {
   "pattern_list" : [{
-    "pattern": "^.*$",
+    "rule_expression": "${true}",
     "response": {
       "body": "Hello, default body!",
       "status_code": 200
@@ -41,30 +41,32 @@ We're going to write our first configuration now to launch an instance with a si
 }
 ```
 
-A YAML parser is also available and you can write your configuration by YAML syntax as well:
+A YAML parser is also available and you can write your configuration by the YAML syntax as well:
 
 ```yaml
 pattern_list:
-- pattern: "^.*$"
+- rule_expression ${true}
   response:
     body: Hello, default body!
     status_code: 200
 ```
 
-`pattern_list` is a list of _rules_ defining how **imposter** will handle incoming requests. Every rule requires a `pattern` at least. That is, if an incoming request URL matches one of the regex patterns the corrisponding `response` is served.  
-By default every rule matches against every HTTP method, but you can overwrite that by using the `method` property:
+`pattern_list` is a list of _rules_ defining how **imposter** will handle incoming requests. Every rule requires a boolean expression. That is, if an incoming request URL matches one of the `rule_expression` the corresponding `response` is served.  
 
-```json
-{
-  "pattern_list" : [{
-    "pattern": "^.*$",
-    "method": "POST",
-    "response": {
-      "body": "Hello, default body!",
-      "status_code": 200
+Let's suppose you need to catch all requests issued by `POST` HTTP method, every URL path containing the string `hello` and just a `Content-Type` header of type `application/json`:
+
+```yaml
+pattern_list:
+- rule_expression: ${
+      and(
+        contains(request_url_path(), "hello"),
+        eq(request_http_method(), "POST"),
+        eq(http_header("Content-Type"), "application/json")
+      )
     }
-  }]
-}
+  response:
+    body: Hello, complex rule!
+    status_code: 200
 ```
 
 Last but not least, you need to define the HTTP `status_code` to be returned (200 when not specified).  
@@ -72,12 +74,12 @@ Rules are tested in the order they were added to the `pattern_list` collection. 
 
 ### The response object
 
-There are two ways of definng a response object and it basically depends on the level of granularity you really need.  
+There are two ways of defining a response object and it basically depends on the level of granularity you really need.  
 For example, you can define it in a computed manner:
 
 ```yaml
 pattern_list:
-- pattern: "^/myredirect$"
+- rule_expression: ${regex_match(request_url_path(), "^/myredirect$")}
   response: ${redirect("http://examp.lecom/foo")}
 ```
 
@@ -89,8 +91,7 @@ Alternatively, you can rely on a full structured version of the response object:
 ```json
 {
   "pattern_list" : [{
-    "pattern": "^/posts$",
-    "method": "POST",
+    "rule_expression": "${regex_match(request_url_path(), \"^/posts$\")}",
     "response": {
       "body": "Hello, post!",
       "headers": {
@@ -102,7 +103,7 @@ Alternatively, you can rely on a full structured version of the response object:
 }
 ```
 
-That will match the URL path `/posts` when an HTTP request will be issued by the `POST` HTTP method. The match will be handled by returning a body containing the `Hello, post!` string and just the `Content-Type` header.
+That will match the URL path `/posts` when an HTTP request will be issued by any HTTP method. The match will be handled by returning a body containing the `Hello, post!` string and just the `Content-Type` header.
 
 ### Variables
 
@@ -111,8 +112,12 @@ Example:
 
 ```yaml
 pattern_list:
-- pattern: "^/imposter$"
-  method: GET
+- rule_expression: ${
+      and(
+        regex_match(request_url_path(), "^/imposter$"),
+        eq(request_http_method(), "GET")
+      )
+    }
   response: ${redirect(var("imposter_link"))}
 vars:
   imposter_link: https://github.com/naighes/imposter
@@ -120,7 +125,7 @@ vars:
 
 ### Built-in functions
 
-Emedded within strings you can interpolate other values. These interpolations are wrapped in `${}`, such as `${link("https://github.com/naighes/imposter")}`.  
+Embedded within strings you can interpolate other values. These interpolations are wrapped in `${}`, such as `${link("https://github.com/naighes/imposter")}`.  
 Imposter ships with built-in functions. Functions are called with the syntax `function_name(arg1, arg2, ...)`. For example, to read a file: `${file("path.txt")}`.
 
 #### Supported built-in functions
@@ -137,6 +142,7 @@ The supported built-in functions are:
  * `request_url_path() -> string` - Returns the path component of the URL for the current request.
  * `request_url_query() -> string` - Returns any query information included in the URL for the current request.
  * `request_url_query(name: string) -> string` - Returns the first value associated with the given name.
+ * `request_method() -> string` - Returns the HTTP method for the current request.
  * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
@@ -156,7 +162,7 @@ if (<boolean_expression>) <expression> else <expression>
 
 ```yaml
 pattern_list:
-- pattern: "^/myfile$"
+- rule_expression: ${regex_match(request_url_path(), "^/myfile$")}
   body: testing if statement
   headers:
     Content-Type: text/plain; charset=utf-8
