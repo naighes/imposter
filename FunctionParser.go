@@ -108,6 +108,8 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 		return evaluateRequestURL(e.args, vars, req)
 	case "request_url_path":
 		return evaluateRequestURLPath(e.args, vars, req)
+	case "request_url_query":
+		return evaluateRequestURLQuery(e.args, vars, req)
 	case "regex_match":
 		return evaluateRegexMatch(e.args, vars, req)
 	default:

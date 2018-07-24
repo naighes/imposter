@@ -111,8 +111,8 @@ Example:
 
 ```yaml
 pattern_list:
-- pattern: "^/posts$"
-  method: POST
+- pattern: "^/imposter$"
+  method: GET
   response: ${redirect(var("imposter_link"))}
 vars:
   imposter_link: https://github.com/naighes/imposter
@@ -135,7 +135,9 @@ The supported built-in functions are:
  * `contains(source: string, value: string) -> bool` - Determines whether `value` substring occurs within this `source` string.
  * `request_url() -> string` - Returns the URL for the current request.
  * `request_url_path() -> string` - Returns the path component of the URL for the current request.
- * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name`.
+ * `request_url_query() -> string` - Returns any query information included in the URL for the current request.
+ * `request_url_query(name: string) -> string` - Returns the first value associated with the given key.
+ * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
  * `link(url: string) -> HttpRsp` - Forwards a client to a new URL.

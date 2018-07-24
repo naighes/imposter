@@ -509,3 +509,31 @@ func TestRegexMatch(t *testing.T) {
 		return
 	}
 }
+
+func TestQuery(t *testing.T) {
+	str := `${if (ne(request_url_query("bar"), ""))
+					request_url_query()
+				else
+					"wrong"}`
+	const query = "bar=buzz"
+	u, _ := url.Parse(fmt.Sprintf("https://examp.lecom/foo?%s", query))
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{URL: u})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected type 'bool'; got '%s'", reflect.TypeOf(e))
+		return
+	}
+	if v != query {
+		t.Errorf("expected value '%s'; got '%s'", query, v)
+		return
+	}
+}

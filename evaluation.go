@@ -255,3 +255,23 @@ func evaluateRequestURLPath(args []expression, vars map[string]interface{}, req 
 	}
 	return req.URL.Path, nil
 }
+
+func evaluateRequestURLQuery(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	l := len(args)
+	switch l {
+	case 0:
+		return req.URL.RawQuery, nil
+	case 1:
+		a, err := args[0].evaluate(vars, req)
+		if err != nil {
+			return "", fmt.Errorf("evaluation error: %s", err)
+		}
+		arg, ok := a.(string)
+		if !ok {
+			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		}
+		return req.URL.Query().Get(arg), nil
+	default:
+		return "", fmt.Errorf("function 'request_url_query' is expecting one or no arguments; found %d argument(s) instead", l)
+	}
+}
