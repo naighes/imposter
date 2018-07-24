@@ -30,6 +30,7 @@ func main() {
 	} else if err := cmd.fn(args[1:]); err != nil {
 		log.Fatal(err)
 	}
+	os.Exit(0)
 }
 
 type command struct {
