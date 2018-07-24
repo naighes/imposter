@@ -282,3 +282,10 @@ func evaluateRequestHTTPMethod(args []expression, vars map[string]interface{}, r
 	}
 	return req.Method, nil
 }
+
+func evaluateRequestHost(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	if l := len(args); l != 0 {
+		return "", fmt.Errorf("function 'request_host' is expecting no arguments; found %d argument(s) instead", l)
+	}
+	return req.Host, nil
+}

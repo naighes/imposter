@@ -539,16 +539,44 @@ func TestQuery(t *testing.T) {
 }
 
 func TestHTTPMethod(t *testing.T) {
-	str := `${if (eq(request_http_method(), "GET"))
+	const expected = "GET"
+	str := fmt.Sprintf(`${if (eq(request_http_method(), "%s"))
 					"ok"
 				else
-					"wrong"}`
+					"wrong"}`, expected)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Method: "GET"})
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Method: expected})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected type 'string'; got '%v'", reflect.TypeOf(e))
+		return
+	}
+	if v != "ok" {
+		t.Errorf("expected value '%s'; got '%s'", "ok", v)
+		return
+	}
+}
+
+func TestRequestHost(t *testing.T) {
+	const expected = "fak.eurl"
+	str := fmt.Sprintf(`${if (eq(request_host(), "%s"))
+					"ok"
+				else
+					"wrong"}`, expected)
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Host: expected})
 	if err != nil {
 		t.Error(err)
 		return

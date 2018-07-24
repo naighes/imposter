@@ -141,8 +141,9 @@ The supported built-in functions are:
  * `request_url() -> string` - Returns the URL for the current request.
  * `request_url_path() -> string` - Returns the path component of the URL for the current request.
  * `request_url_query() -> string` - Returns any query information included in the URL for the current request.
- * `request_url_query(name: string) -> string` - Returns the first value associated with the given name.
- * `request_method() -> string` - Returns the HTTP method for the current request.
+ * `request_url_query(name: string) -> string` - Returns the first value associated with the given `name`.
+ * `request_http_method() -> string` - Returns the HTTP method for the current request.
+ * `request_host() -> string` - Returns the HTTP Host for the current request.
  * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
