@@ -19,6 +19,8 @@ $ go get -u github.com/naighes/imposter
       TCP port the server is listening at
   -config-file
       Configuration file (see documentation below)
+  -graceful-timeout duration
+      The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m (default 15s)
 ```
 
 ---

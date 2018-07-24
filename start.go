@@ -20,7 +20,7 @@ func startCmd() command {
 	opts := startOpts{port: defaultPort}
 	fs.IntVar(&opts.port, "port", defaultPort, "The listening TCP port")
 	fs.StringVar(&opts.configFile, "config-file", "stdin", "The configuration file")
-	flag.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
+	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
 		return start(&opts)
