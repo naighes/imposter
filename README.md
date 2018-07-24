@@ -45,7 +45,7 @@ A YAML parser is also available and you can write your configuration by the YAML
 
 ```yaml
 pattern_list:
-- rule_expression ${true}
+- rule_expression: ${true}
   response:
     body: Hello, default body!
     status_code: 200
