@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// TODO: HTTP client needs a bit more attention
 func evaluateLink(args []expression, vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'link' is expecting one argument of type 'string'; found %d argument(s) instead", l)

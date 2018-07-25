@@ -15,12 +15,18 @@ $ go get -u github.com/naighes/imposter
 
 ## Start command
 ```console
-  -port int
-      TCP port the server is listening at
-  -config-file
-      Configuration file (see documentation below)
-  -graceful-timeout duration
+
+Usage of imposter start:
+  -config-file <string>
+      The configuration file
+  -graceful-timeout <duration>
       The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m (default 15s)
+  -port <int>
+      The listening TCP port (default 8080)
+  -tls-cert-file-list <string>
+      A comma separated list of x.509 certificates to secure communication
+  -tls-key-file-list <string>
+      A comma separated list of private key files corresponding to the x.509 certificates
 ```
 
 ---
