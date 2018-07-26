@@ -27,7 +27,7 @@ func startCmd() command {
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
-		return start(&opts)
+		return startExec(&opts)
 	}}
 }
 
@@ -84,7 +84,7 @@ func readConfig(configFile string) (*Config, error) {
 	return &Config{}, err
 }
 
-func start(opts *startOpts) error {
+func startExec(opts *startOpts) error {
 	config, err := readConfig(opts.configFile)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v\n", err)

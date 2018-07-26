@@ -9,7 +9,8 @@ import (
 
 func main() {
 	commands := map[string]command{
-		"start": startCmd(),
+		"start":   startCmd(),
+		"version": versionCmd(),
 	}
 	fs := flag.NewFlagSet("imposter", flag.ExitOnError)
 	fs.Usage = func() {
