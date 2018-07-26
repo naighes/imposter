@@ -1,4 +1,4 @@
-# naighes/imposter
+# naighes/imposter [![Build Status](https://travis-ci.com/naighes/imposter.svg?branch=master)](https://travis-ci.com/naighes/imposter)
 
 ![Imposter Logo](https://raw.githubusercontent.com/naighes/imposter/master/readme_files/logo.png)
 
