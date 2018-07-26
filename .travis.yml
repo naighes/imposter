@@ -1,0 +1,26 @@
+dist: trusty
+sudo: required
+services:
+  - docker
+language: go
+go:
+  - "1.10.3"
+
+env:
+  - GOMAXPROCS=4
+
+before_script:
+  - git config --global url.https://github.com/.insteadOf ssh://git@github.com/
+
+script:
+  - make test
+  - GOOS=windows go build
+
+branches:
+  only:
+    - master
+
+matrix:
+  fast_finish: true
+  allow_failures:
+    - go: tip

@@ -101,7 +101,7 @@ func TestArrayIdentity(t *testing.T) {
 		return
 	}
 	if l := len(v); l != 2 {
-		t.Errorf("expected array of length 2; got '%s'", l)
+		t.Errorf("expected array of length 2; got '%d'", l)
 		return
 	}
 }
