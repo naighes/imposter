@@ -13,8 +13,8 @@ before_script:
   - git config --global url.https://github.com/.insteadOf ssh://git@github.com/
 
 script:
+  - GOOS=windows go get -d && go build
   - make test
-  - GOOS=windows go build
 
 branches:
   only:
