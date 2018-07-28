@@ -290,3 +290,24 @@ func evaluateRequestHost(args []expression, vars map[string]interface{}, req *ht
 	}
 	return req.Host, nil
 }
+
+func evaluateIn(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
+	if l := len(args); l < 2 {
+		return false, fmt.Errorf("function 'in' is expecting two arguments: 'array' and 'int|string|bool|float64'; found %d argument(s) instead", l)
+	}
+	a, err := args[0].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	var ok bool
+	var left map[interface{}]bool
+	if left, ok = a.(map[interface{}]bool); !ok {
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to array", a)
+	}
+	b, err := args[1].evaluate(vars, req)
+	if err != nil {
+		return false, fmt.Errorf("evaluation error: %s", err)
+	}
+	_, ok = left[b]
+	return ok, nil
+}

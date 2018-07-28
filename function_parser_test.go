@@ -95,9 +95,9 @@ func TestArrayIdentity(t *testing.T) {
 		t.Errorf("evaluation error: %v", err)
 		return
 	}
-	v, ok := e.([]interface{})
+	v, ok := e.(map[interface{}]bool)
 	if !ok {
-		t.Errorf("expected type '[]interface{}'; got '%s'", reflect.TypeOf(e))
+		t.Errorf("expected type 'map[interface{}]bool'; got '%s'", reflect.TypeOf(e))
 		return
 	}
 	if l := len(v); l != 2 {
@@ -567,16 +567,74 @@ func TestHTTPMethod(t *testing.T) {
 
 func TestRequestHost(t *testing.T) {
 	const expected = "fak.eurl"
-	str := fmt.Sprintf(`${if (eq(request_host(), "%s"))
-					"ok"
-				else
-					"wrong"}`, expected)
+	str := fmt.Sprintf(`${
+		if (eq(request_host(), "%s"))
+			"ok"
+		else
+			"wrong"
+	}`, expected)
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Host: expected})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected type 'string'; got '%v'", reflect.TypeOf(e))
+		return
+	}
+	if v != "ok" {
+		t.Errorf("expected value '%s'; got '%s'", "ok", v)
+		return
+	}
+}
+
+func TestArrayInTrue(t *testing.T) {
+	str := `${
+		if (in(["a", "b", "c"], "b"))
+			"ok"
+		else
+			"wrong"
+	}`
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	v, ok := e.(string)
+	if !ok {
+		t.Errorf("expected type 'string'; got '%v'", reflect.TypeOf(e))
+		return
+	}
+	if v != "ok" {
+		t.Errorf("expected value '%s'; got '%s'", "ok", v)
+		return
+	}
+}
+
+func TestArrayInFalse(t *testing.T) {
+	str := `${
+		if (not(in([1, 2, 4], 3)))
+			"ok"
+		else
+			"wrong"
+	}`
+	token, err := ParseExpression(str)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
