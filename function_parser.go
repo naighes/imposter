@@ -63,7 +63,7 @@ func (e booleanIdentity) evaluate(vars map[string]interface{}, req *http.Request
 }
 
 func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	r := make(map[interface{}]bool)
+	var r []interface{}
 	var t reflect.Type
 	for index, element := range e.elements {
 		a, err := element.evaluate(vars, req)
@@ -76,7 +76,7 @@ func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) 
 		switch a.(type) {
 		case int, string, bool, float64:
 			t = reflect.TypeOf(a)
-			r[a] = true
+			r = append(r, a)
 		default:
 			return nil, fmt.Errorf("array support is limited to 'int', 'string', 'bool', 'float64': found '%v' instead", t)
 		}

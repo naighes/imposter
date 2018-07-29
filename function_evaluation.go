@@ -300,14 +300,18 @@ func evaluateIn(args []expression, vars map[string]interface{}, req *http.Reques
 		return false, fmt.Errorf("evaluation error: %s", err)
 	}
 	var ok bool
-	var left map[interface{}]bool
-	if left, ok = a.(map[interface{}]bool); !ok {
+	var left []interface{}
+	if left, ok = a.([]interface{}); !ok {
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to array", a)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
 		return false, fmt.Errorf("evaluation error: %s", err)
 	}
-	_, ok = left[b]
-	return ok, nil
+	for _, el := range left {
+		if el == b {
+			return true, nil
+		}
+	}
+	return false, nil
 }

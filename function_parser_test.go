@@ -95,7 +95,7 @@ func TestArrayIdentity(t *testing.T) {
 		t.Errorf("evaluation error: %v", err)
 		return
 	}
-	v, ok := e.(map[interface{}]bool)
+	v, ok := e.([]interface{})
 	if !ok {
 		t.Errorf("expected type 'map[interface{}]bool'; got '%s'", reflect.TypeOf(e))
 		return
