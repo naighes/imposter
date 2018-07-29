@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -46,4 +48,19 @@ func parseYaml(j []byte) (*Config, error) {
 		return nil, err
 	}
 	return r, nil
+}
+
+func readConfig(configFile string) (*Config, error) {
+	var err error
+	var configPath string
+	var rawConfig []byte
+	var config *Config
+	if configPath, err = filepath.Abs(configFile); err == nil {
+		if rawConfig, err = ioutil.ReadFile(configPath); err == nil {
+			if config, err = ParseConfig(rawConfig); err == nil {
+				return config, nil
+			}
+		}
+	}
+	return &Config{}, err
 }

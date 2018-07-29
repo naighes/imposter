@@ -15,20 +15,20 @@ func evaluateLink(args []expression, vars map[string]interface{}, req *http.Requ
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return 0, fmt.Errorf("evaluation error: %s", err)
+		return 0, fmt.Errorf("%v", err)
 	}
 	b, ok := a.(string)
 	if !ok {
-		return 0, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return 0, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	rsp, err := http.Get(b)
 	defer rsp.Body.Close()
 	if err != nil {
-		return 0, fmt.Errorf("evaluation error: %s", err)
+		return 0, fmt.Errorf("evaluation error: %v", err)
 	}
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("evaluation error: %s", err)
+		return 0, fmt.Errorf("evaluation error: %v", err)
 	}
 	r := &HttpRsp{Body: string(body), Headers: rsp.Header, StatusCode: rsp.StatusCode}
 	return r, nil
@@ -40,11 +40,11 @@ func evaluateRedirect(args []expression, vars map[string]interface{}, req *http.
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("evaluation error: %s", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	b, ok := a.(string)
 	if !ok {
-		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	h := make(http.Header)
 	h.Set("Location", b)
@@ -58,11 +58,11 @@ func evaluateFile(args []expression, vars map[string]interface{}, req *http.Requ
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("evaluation error: %s", err)
+		return "", fmt.Errorf("%v", err)
 	}
 	b, ok := a.(string)
 	if !ok {
-		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	content, err := ioutil.ReadFile(b)
 	if err != nil {
@@ -77,11 +77,11 @@ func evaluateVar(args []expression, vars map[string]interface{}, req *http.Reque
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("evaluation error: %s", err)
+		return "", fmt.Errorf("%v", err)
 	}
 	b, ok := a.(string)
 	if !ok {
-		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	if v, ok := vars[b]; ok {
 		return v.(string), nil
@@ -91,17 +91,17 @@ func evaluateVar(args []expression, vars map[string]interface{}, req *http.Reque
 
 func evaluateAnd(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
 	if l := len(args); l < 2 {
-		return false, fmt.Errorf("function 'and' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+		return false, fmt.Errorf("function 'and' is expecting at least two arguments of type 'bool'; found %d argument(s) instead", l)
 	}
 	r := true
 	for _, arg := range args {
 		a, err := arg.evaluate(vars, req)
 		if err != nil {
-			return false, fmt.Errorf("evaluation error: %s", err)
+			return false, fmt.Errorf("%v", err)
 		}
 		b, ok := a.(bool)
 		if !ok {
-			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", a)
 		}
 		r = r && b
 	}
@@ -110,17 +110,17 @@ func evaluateAnd(args []expression, vars map[string]interface{}, req *http.Reque
 
 func evaluateOr(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
 	if l := len(args); l < 2 {
-		return false, fmt.Errorf("function 'or' is expecting at least two arguments of type 'boolean'; found %d argument(s) instead", l)
+		return false, fmt.Errorf("function 'or' is expecting at least two arguments of type 'bool'; found %d argument(s) instead", l)
 	}
 	r := false
 	for _, arg := range args {
 		a, err := arg.evaluate(vars, req)
 		if err != nil {
-			return false, fmt.Errorf("evaluation error: %s", err)
+			return false, fmt.Errorf("%v", err)
 		}
 		b, ok := a.(bool)
 		if !ok {
-			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", a)
 		}
 		r = r || b
 	}
@@ -129,15 +129,15 @@ func evaluateOr(args []expression, vars map[string]interface{}, req *http.Reques
 
 func evaluateNot(args []expression, vars map[string]interface{}, req *http.Request) (bool, error) {
 	if l := len(args); l != 1 {
-		return false, fmt.Errorf("function 'not' is expecting one argument of type 'boolean'; found %d argument(s) instead", l)
+		return false, fmt.Errorf("function 'not' is expecting one argument of type 'bool'; found %d argument(s) instead", l)
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	b, ok := a.(bool)
 	if !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to boolean", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", a)
 	}
 	return !b, nil
 }
@@ -148,11 +148,11 @@ func evaluateHttpHeader(args []expression, vars map[string]interface{}, req *htt
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("evaluation error: %s", err)
+		return "", fmt.Errorf("%v", err)
 	}
 	b, ok := a.(string)
 	if !ok {
-		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	if h := req.Header; h != nil {
 		return req.Header.Get(b), nil
@@ -167,11 +167,11 @@ func evaluateEq(args []expression, vars map[string]interface{}, req *http.Reques
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	return a == b, nil
 }
@@ -182,11 +182,11 @@ func evaluateNe(args []expression, vars map[string]interface{}, req *http.Reques
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	return a != b, nil
 }
@@ -197,20 +197,20 @@ func evaluateContains(args []expression, vars map[string]interface{}, req *http.
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	var ok bool
 	var left string
 	if left, ok = a.(string); !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	var right string
 	if right, ok = b.(string); !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	return strings.Index(left, right) != -1, nil
 }
@@ -228,20 +228,20 @@ func evaluateRegexMatch(args []expression, vars map[string]interface{}, req *htt
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	var ok bool
 	var left string
 	if left, ok = a.(string); !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	var right string
 	if right, ok = b.(string); !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	reg, err := regexp.Compile(right)
 	if err != nil {
@@ -254,22 +254,28 @@ func evaluateRequestURLPath(args []expression, vars map[string]interface{}, req 
 	if l := len(args); l != 0 {
 		return "", fmt.Errorf("function 'request_url_path' is expecting no arguments; found %d argument(s) instead", l)
 	}
-	return req.URL.Path, nil
+	if req.URL != nil {
+		return req.URL.Path, nil
+	}
+	return "", nil
 }
 
 func evaluateRequestURLQuery(args []expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	l := len(args)
 	switch l {
 	case 0:
-		return req.URL.RawQuery, nil
+		if req.URL != nil {
+			return req.URL.RawQuery, nil
+		}
+		return "", nil
 	case 1:
 		a, err := args[0].evaluate(vars, req)
 		if err != nil {
-			return "", fmt.Errorf("evaluation error: %s", err)
+			return "", fmt.Errorf("%v", err)
 		}
 		arg, ok := a.(string)
 		if !ok {
-			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to string", a)
+			return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 		}
 		return req.URL.Query().Get(arg), nil
 	default:
@@ -297,16 +303,16 @@ func evaluateIn(args []expression, vars map[string]interface{}, req *http.Reques
 	}
 	a, err := args[0].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	var ok bool
 	var left []interface{}
 	if left, ok = a.([]interface{}); !ok {
-		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to array", a)
+		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'array'", a)
 	}
 	b, err := args[1].evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("evaluation error: %s", err)
+		return false, fmt.Errorf("%v", err)
 	}
 	for _, el := range left {
 		if el == b {

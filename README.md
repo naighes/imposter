@@ -14,6 +14,8 @@ $ go get -u github.com/naighes/imposter
 ---
 
 ## Start command
+Run a new instance of **imposter**.
+
 ```console
 
 Usage of imposter start:
@@ -30,6 +32,16 @@ Usage of imposter start:
 ```
 
 ---
+
+## Validate command
+Validate the syntax of a configuration file.
+
+```console
+
+Usage of imposter validate:
+  -config-file string
+        The configuration file
+```
 
 ## Configuration file
 
@@ -157,6 +169,7 @@ The supported built-in functions are:
  * `file(path: string) -> string` - Reads the content of a file into a string.
  * `link(url: string) -> HttpRsp` - Forwards a client to a new URL.
  * `redirect(url: string) -> HttpRsp` - Redirects a client to a new URL with a 301 status code.
+ * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element in an `array` object.
 
 #### Conditional statements
 A conditional statement identifies which statement to run based on the value of a boolean expression.  

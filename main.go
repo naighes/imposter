@@ -9,8 +9,9 @@ import (
 
 func main() {
 	commands := map[string]command{
-		"start":   startCmd(),
-		"version": versionCmd(),
+		"start":    startCmd(),
+		"version":  versionCmd(),
+		"validate": validateCmd(),
 	}
 	fs := flag.NewFlagSet("imposter", flag.ExitOnError)
 	fs.Usage = func() {

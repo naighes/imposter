@@ -5,12 +5,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -66,22 +64,6 @@ func (o *startOpts) buildListenAndServe(server *http.Server) (func() error, erro
 		}, nil
 	}
 	return server.ListenAndServe, nil
-}
-
-func readConfig(configFile string) (*Config, error) {
-	var err error
-	var configPath string
-	var rawConfig []byte
-	var config *Config
-	if configPath, err = filepath.Abs(configFile); err == nil {
-		if rawConfig, err = ioutil.ReadFile(configPath); err == nil {
-			if config, err = ParseConfig(rawConfig); err == nil {
-				log.Printf("read configuration from file '%s'\n", configPath)
-				return config, nil
-			}
-		}
-	}
-	return &Config{}, err
 }
 
 func startExec(opts *startOpts) error {

@@ -38,7 +38,7 @@ type floatIdentity struct {
 	value string
 }
 
-type booleanIdentity struct {
+type boolIdentity struct {
 	value string
 }
 
@@ -58,7 +58,7 @@ func (e floatIdentity) evaluate(vars map[string]interface{}, req *http.Request) 
 	return strconv.ParseFloat(e.value, 64)
 }
 
-func (e booleanIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e boolIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseBool(e.value)
 }
 
@@ -68,7 +68,7 @@ func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) 
 	for index, element := range e.elements {
 		a, err := element.evaluate(vars, req)
 		if err != nil {
-			return nil, fmt.Errorf("evaluation error: %s", err)
+			return nil, fmt.Errorf("%v", err)
 		}
 		if index > 0 && t != reflect.TypeOf(a) {
 			return nil, fmt.Errorf("evaluation error: mixed type arrays are not allowed")
@@ -131,11 +131,11 @@ func (e function) evaluate(vars map[string]interface{}, req *http.Request) (inte
 func (e ifElse) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	guard, err := e.guard.evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("evaluation error: %s", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	guardValue, ok := guard.(bool)
 	if !ok {
-		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to bool", guard)
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", guard)
 	}
 	var exp expression
 	if guardValue {
@@ -145,7 +145,7 @@ func (e ifElse) evaluate(vars map[string]interface{}, req *http.Request) (interf
 	}
 	val, err := exp.evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("evaluation error: %s", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	return val, nil
 }
@@ -358,13 +358,13 @@ func getParser(str string, start int) (parser, int, error) {
 		if isLetter(c) {
 			if len(str) >= start+4 && str[start:start+4] == "true" {
 				return func(string, int) (expression, int, error) {
-					e := &booleanIdentity{value: "true"}
+					e := &boolIdentity{value: "true"}
 					return e, start + 4, nil
 				}, start, nil
 			}
 			if len(str) >= start+5 && str[start:start+5] == "false" {
 				return func(string, int) (expression, int, error) {
-					e := &booleanIdentity{value: "false"}
+					e := &boolIdentity{value: "false"}
 					return e, start + 5, nil
 				}, start, nil
 			}

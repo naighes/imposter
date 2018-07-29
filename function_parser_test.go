@@ -50,16 +50,16 @@ func TestStringIdentity(t *testing.T) {
 	}
 }
 
-func TestBooleanIdentity(t *testing.T) {
+func TestBoolIdentity(t *testing.T) {
 	str := "${true}"
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b, ok := token.(*booleanIdentity)
+	b, ok := token.(*boolIdentity)
 	if !ok {
-		t.Errorf("expected type '*booleanIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*boolIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
 	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
@@ -73,7 +73,7 @@ func TestBooleanIdentity(t *testing.T) {
 		return
 	}
 	if !v {
-		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
+		t.Errorf("expected 'bool' value 'true'; got '%v' instead", v)
 		return
 	}
 }
@@ -148,7 +148,7 @@ func TestOrEvaluation(t *testing.T) {
 		return
 	}
 	if !v {
-		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
+		t.Errorf("expected 'bool' value 'true'; got '%v' instead", v)
 		return
 	}
 }
@@ -178,7 +178,7 @@ func TestAndEvaluation(t *testing.T) {
 		return
 	}
 	if !v {
-		t.Errorf("expected boolean value 'true'; got '%v' instead", v)
+		t.Errorf("expected 'bool' value 'true'; got '%v' instead", v)
 		return
 	}
 }

@@ -32,7 +32,7 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		b, ok := a.(bool)
 		if !ok {
-			writeError(w, fmt.Errorf("rule_expression requires a boolean expression: found %v instead", reflect.TypeOf(a)))
+			writeError(w, fmt.Errorf("rule_expression requires a 'bool' expression: found '%v' instead", reflect.TypeOf(a)))
 			return
 		}
 		if b {
@@ -68,10 +68,7 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	r := RegexHandler{}
 	r.vars = vars
 	for _, def := range defs {
-		reg, err := ParseExpression(def.RuleExpression)
-		if err != nil {
-			return nil, err
-		}
+		rule, err := ParseExpression(def.RuleExpression)
 		if err != nil {
 			return nil, err
 		}
@@ -86,7 +83,7 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if def.Latency < 0 {
 			return nil, fmt.Errorf("latency requires a value greater than zero")
 		}
-		r.addRoute(reg, method, def.Latency, enrichHeaders(f, options))
+		r.addRoute(rule, method, def.Latency, enrichHeaders(f, options))
 	}
 	return &r, nil
 }
