@@ -76,17 +76,25 @@ func (def *MatchDef) validate(vars map[string]interface{}) []string {
 }
 
 func validateRuleExpression(expression string, vars map[string]interface{}) error {
-	e, err := ParseExpression(expression)
+	e, err := validateEvaluation(expression, vars)
 	if err != nil {
 		return err
+	}
+	_, ok := e.(bool)
+	if !ok {
+		fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(e))
+	}
+	return nil
+}
+
+func validateEvaluation(expression string, vars map[string]interface{}) (interface{}, error) {
+	e, err := ParseExpression(expression)
+	if err != nil {
+		return nil, err
 	}
 	a, err := e.evaluate(vars, &http.Request{Header: http.Header{}})
 	if err != nil {
-		return err
+		return nil, err
 	}
-	_, ok := a.(bool)
-	if !ok {
-		fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(a))
-	}
-	return nil
+	return a, nil
 }

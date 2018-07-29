@@ -22,10 +22,10 @@ func evaluateLink(args []expression, vars map[string]interface{}, req *http.Requ
 		return 0, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	rsp, err := http.Get(b)
-	defer rsp.Body.Close()
 	if err != nil {
 		return 0, fmt.Errorf("evaluation error: %v", err)
 	}
+	defer rsp.Body.Close()
 	body, err := ioutil.ReadAll(rsp.Body)
 	if err != nil {
 		return 0, fmt.Errorf("evaluation error: %v", err)
