@@ -16,7 +16,7 @@ $ go get -u github.com/naighes/imposter
 ## Start command
 Run a new instance of **imposter**.
 
-```console
+```sh
 
 # Usage of imposter start:
 #   -config-file <string>
@@ -40,7 +40,7 @@ $ ./imposter start --config-file ./config.yaml --port 3000
 ## Validate command
 Validate the syntax of a configuration file.
 
-```console
+```sh
 
 # Usage of imposter validate:
 #   -config-file string
@@ -177,7 +177,7 @@ The supported built-in functions are:
  * `file(path: string) -> string` - Reads the content of a file into a string.
  * `link(url: string) -> HttpRsp` - Forwards a client to a new URL.
  * `redirect(url: string) -> HttpRsp` - Redirects a client to a new URL with a 301 status code.
- * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element in an `array` object.
+ * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element within the `source` array  object.
 
 #### Conditional statements
 A conditional statement identifies which statement to run based on the value of a boolean expression.  

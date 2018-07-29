@@ -78,7 +78,7 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) 
 		for k, v := range rsp.Headers {
 			header, ok := v.(string)
 			if !ok {
-				return nil, fmt.Errorf("expected a value of type string; got '%s' instead", reflect.TypeOf(v))
+				return nil, fmt.Errorf("expected a value of type 'string'; got '%s' instead", reflect.TypeOf(v))
 			}
 			he, err := parse(header)
 			if err != nil {

@@ -67,8 +67,12 @@ func readConfig(configFile string) (*Config, error) {
 	return &Config{}, err
 }
 
-func (def *MatchDef) validate(vars map[string]interface{}) error {
-	return validateRuleExpression(def.RuleExpression, vars)
+func (def *MatchDef) validate(vars map[string]interface{}) []string {
+	var r []string
+	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
+		r = append(r, fmt.Sprintf("%v", err))
+	}
+	return r
 }
 
 func validateRuleExpression(expression string, vars map[string]interface{}) error {

@@ -35,9 +35,9 @@ func validateExec(opts *validateOpts) error {
 	}
 	defs := config.Defs
 	for _, def := range defs {
-		err := def.validate(vars)
-		if err != nil {
-			r = append(r, fmt.Sprintf("%v", err))
+		errors := def.validate(vars)
+		if len(errors) > 0 {
+			r = append(r, errors...)
 		}
 	}
 	if l := len(r); l > 0 {
