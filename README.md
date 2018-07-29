@@ -29,6 +29,10 @@ Usage of imposter start:
       A comma separated list of x.509 certificates to secure communication
   -tls-key-file-list <string>
       A comma separated list of private key files corresponding to the x.509 certificates
+
+Example:
+$ ./imposter start --config-file ./config.yaml --port 3000
+
 ```
 
 ---
@@ -41,6 +45,10 @@ Validate the syntax of a configuration file.
 Usage of imposter validate:
   -config-file string
         The configuration file
+
+Example:
+$ ./imposter validate --config-file ./config.yaml
+
 ```
 
 ## Configuration file
