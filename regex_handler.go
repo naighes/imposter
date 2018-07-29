@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -17,7 +16,6 @@ type RegexHandler struct {
 
 type regexRoute struct {
 	expression expression
-	method     string
 	latency    time.Duration
 	handler    http.Handler
 }
@@ -47,8 +45,8 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *RegexHandler) addRoute(expression expression, method string, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
-	handler.routes = append(handler.routes, &regexRoute{expression, method, latency, http.HandlerFunc(h)})
+func (handler *RegexHandler) addRoute(expression expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+	handler.routes = append(handler.routes, &regexRoute{expression, latency, http.HandlerFunc(h)})
 }
 
 func NewRegexHandler(config *Config) (*RegexHandler, error) {
@@ -76,29 +74,12 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if err != nil {
 			return nil, err
 		}
-		method, err := getMethod(def)
-		if err != nil {
-			return nil, err
-		}
 		if def.Latency < 0 {
 			return nil, fmt.Errorf("latency requires a value greater than zero")
 		}
-		r.addRoute(rule, method, def.Latency, enrichHeaders(f, options))
+		r.addRoute(rule, def.Latency, enrichHeaders(f, options))
 	}
 	return &r, nil
-}
-
-func getMethod(def *MatchDef) (string, error) {
-	if def.Method == "" {
-		return "*", nil
-	}
-	m := strings.ToUpper(def.Method)
-	switch m {
-	case "OPTIONS", "HEAD", "GET", "POST", "PUT", "DELETE", "TRACE", "*":
-		return m, nil
-	default:
-		return "", fmt.Errorf("HTTP method '%s' is not supported", m)
-	}
 }
 
 func writeError(w http.ResponseWriter, err error) {

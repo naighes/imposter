@@ -3,9 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
-	"reflect"
 	"strings"
 )
 
@@ -37,18 +35,9 @@ func validateExec(opts *validateOpts) error {
 	}
 	defs := config.Defs
 	for _, def := range defs {
-		e, err := ParseExpression(def.RuleExpression)
+		err := def.validate(vars)
 		if err != nil {
 			r = append(r, fmt.Sprintf("%v", err))
-		} else {
-			a, err := e.evaluate(vars, &http.Request{Header: http.Header{}})
-			if err != nil {
-				r = append(r, fmt.Sprintf("%v", err))
-			}
-			_, ok := a.(bool)
-			if !ok {
-				r = append(r, fmt.Sprintf("evaluation error: expected 'bool'; got '%v' instead", reflect.TypeOf(a)))
-			}
 		}
 	}
 	if l := len(r); l > 0 {

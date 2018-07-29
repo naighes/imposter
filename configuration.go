@@ -2,8 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"net/http"
 	"path/filepath"
+	"reflect"
 	"time"
 
 	"gopkg.in/yaml.v2"
@@ -21,7 +24,6 @@ type ConfigOptions struct {
 
 type MatchDef struct {
 	RuleExpression string        `json:"rule_expression" yaml:"rule_expression"`
-	Method         string        `json:"method" yaml:"method"`
 	Latency        time.Duration `json:"latency" yaml:"latency"`
 	Response       interface{}   `json:"response" yaml:"response"`
 }
@@ -63,4 +65,24 @@ func readConfig(configFile string) (*Config, error) {
 		}
 	}
 	return &Config{}, err
+}
+
+func (def *MatchDef) validate(vars map[string]interface{}) error {
+	return validateRuleExpression(def.RuleExpression, vars)
+}
+
+func validateRuleExpression(expression string, vars map[string]interface{}) error {
+	e, err := ParseExpression(expression)
+	if err != nil {
+		return err
+	}
+	a, err := e.evaluate(vars, &http.Request{Header: http.Header{}})
+	if err != nil {
+		return err
+	}
+	_, ok := a.(bool)
+	if !ok {
+		fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(a))
+	}
+	return nil
 }
