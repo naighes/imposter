@@ -71,7 +71,7 @@ func startExec(opts *startOpts) error {
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v\n", err)
 	}
-	router, err := NewRegexHandler(config)
+	router, err := NewRouter(config)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v\n", err)
 	}

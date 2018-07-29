@@ -10,9 +10,9 @@ import (
 func TestEmptyRuleSet(t *testing.T) {
 	config := Config{}
 	r := httptest.NewRecorder()
-	routes, err := NewRegexHandler(&config)
+	routes, err := NewRouter(&config)
 	if err != nil {
-		t.Errorf("cannot create a new instance of NewRegexHandler")
+		t.Errorf("cannot create a new instance of NewRouter")
 	}
 	routes.ServeHTTP(r, nil)
 	const expected = 404
@@ -30,9 +30,9 @@ func TestMatchingRule(t *testing.T) {
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}
 	r := httptest.NewRecorder()
-	routes, err := NewRegexHandler(&config)
+	routes, err := NewRouter(&config)
 	if err != nil {
-		t.Errorf("cannot create a new instance of NewRegexHandler: %v", err)
+		t.Errorf("cannot create a new instance of NewRouter: %v", err)
 	}
 	url, _ := url.Parse("http://fak.eurl/123")
 	req := http.Request{Method: "GET", URL: url}
@@ -54,9 +54,9 @@ func TestNonMatchingRule(t *testing.T) {
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}
 	r := httptest.NewRecorder()
-	routes, err := NewRegexHandler(&config)
+	routes, err := NewRouter(&config)
 	if err != nil {
-		t.Errorf("cannot create a new instance of NewRegexHandler")
+		t.Errorf("cannot create a new instance of NewRouter")
 	}
 	url, _ := url.Parse("http://fak.eurl/aaa")
 	req := http.Request{Method: "GET", URL: url}

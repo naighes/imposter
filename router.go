@@ -9,18 +9,18 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-type RegexHandler struct {
-	routes []*regexRoute
+type Router struct {
+	routes []*route
 	vars   map[string]interface{}
 }
 
-type regexRoute struct {
+type route struct {
 	expression expression
 	latency    time.Duration
 	handler    http.Handler
 }
 
-func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (handler *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
 		// TODO: X-Forwarded-Host?
 		a, err := route.expression.evaluate(handler.vars, r)
@@ -45,11 +45,11 @@ func (handler *RegexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *RegexHandler) addRoute(expression expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
-	handler.routes = append(handler.routes, &regexRoute{expression, latency, http.HandlerFunc(h)})
+func (handler *Router) add(expression expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+	handler.routes = append(handler.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
-func NewRegexHandler(config *Config) (*RegexHandler, error) {
+func NewRouter(config *Config) (*Router, error) {
 	defs := config.Defs
 	var options *ConfigOptions
 	if config.Options == nil {
@@ -63,7 +63,7 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 	} else {
 		vars = config.Vars
 	}
-	r := RegexHandler{}
+	r := Router{}
 	r.vars = vars
 	for _, def := range defs {
 		rule, err := ParseExpression(def.RuleExpression)
@@ -77,7 +77,7 @@ func NewRegexHandler(config *Config) (*RegexHandler, error) {
 		if def.Latency < 0 {
 			return nil, fmt.Errorf("latency requires a value greater than zero")
 		}
-		r.addRoute(rule, def.Latency, enrichHeaders(f, options))
+		r.add(rule, def.Latency, enrichHeaders(f, options))
 	}
 	return &r, nil
 }
