@@ -1,4 +1,4 @@
-package main
+package functions
 
 import (
 	"bufio"
@@ -11,62 +11,62 @@ import (
 	"strings"
 )
 
-type expression interface {
-	evaluate(map[string]interface{}, *http.Request) (interface{}, error)
+type Expression interface {
+	Evaluate(map[string]interface{}, *http.Request) (interface{}, error)
 }
 
-type ifElse struct {
-	guard expression
-	left  expression
-	right expression
+type IfElse struct {
+	Guard Expression
+	Left  Expression
+	Right Expression
 }
 
-type function struct {
-	name string
-	args []expression
+type Function struct {
+	Name string
+	Args []Expression
 }
 
-type stringIdentity struct {
-	value string
+type StringIdentity struct {
+	Value string
 }
 
-type integerIdentity struct {
-	value string
+type IntegerIdentity struct {
+	Value string
 }
 
-type floatIdentity struct {
-	value string
+type FloatIdentity struct {
+	Value string
 }
 
-type boolIdentity struct {
-	value string
+type BoolIdentity struct {
+	Value string
 }
 
-type arrayIdentity struct {
-	elements []expression
+type ArrayIdentity struct {
+	Elements []Expression
 }
 
-func (e stringIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return e.value, nil
+func (e StringIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.Value, nil
 }
 
-func (e integerIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return strconv.Atoi(e.value)
+func (e IntegerIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return strconv.Atoi(e.Value)
 }
 
-func (e floatIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return strconv.ParseFloat(e.value, 64)
+func (e FloatIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return strconv.ParseFloat(e.Value, 64)
 }
 
-func (e boolIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return strconv.ParseBool(e.value)
+func (e BoolIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return strconv.ParseBool(e.Value)
 }
 
-func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e ArrayIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	var r []interface{}
 	var t reflect.Type
-	for index, element := range e.elements {
-		a, err := element.evaluate(vars, req)
+	for index, element := range e.Elements {
+		a, err := element.Evaluate(vars, req)
 		if err != nil {
 			return nil, fmt.Errorf("%v", err)
 		}
@@ -85,51 +85,123 @@ func (e arrayIdentity) evaluate(vars map[string]interface{}, req *http.Request) 
 	return r, nil
 }
 
-func (e function) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	switch e.name {
+func (e Function) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	switch e.Name {
 	case "link":
-		return evaluateLink(e.args, vars, req)
+		f, err := newLinkFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "redirect":
-		return evaluateRedirect(e.args, vars, req)
+		f, err := newRedirectFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "file":
-		return evaluateFile(e.args, vars, req)
+		f, err := newFileFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "var":
-		return evaluateVar(e.args, vars, req)
+		f, err := newVarFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "and":
-		return evaluateAnd(e.args, vars, req)
+		f, err := newAndFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "or":
-		return evaluateOr(e.args, vars, req)
+		f, err := newOrFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "not":
-		return evaluateNot(e.args, vars, req)
+		f, err := newNotFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "http_header":
-		return evaluateHttpHeader(e.args, vars, req)
+		f, err := newHttpHeaderFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "eq":
-		return evaluateEq(e.args, vars, req)
+		f, err := newEqFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "ne":
-		return evaluateNe(e.args, vars, req)
+		f, err := newNeFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "contains":
-		return evaluateContains(e.args, vars, req)
+		f, err := newContainsFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "request_url":
-		return evaluateRequestURL(e.args, vars, req)
+		f, err := newRequestURLFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "request_url_path":
-		return evaluateRequestURLPath(e.args, vars, req)
+		f, err := newRequestURLPathFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "request_url_query":
-		return evaluateRequestURLQuery(e.args, vars, req)
+		f, err := newRequestURLQueryFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "request_http_method":
-		return evaluateRequestHTTPMethod(e.args, vars, req)
-	case "request_host":
-		return evaluateRequestHost(e.args, vars, req)
+		f, err := newRequestHTTPMethodFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
+	case "request_http_host":
+		f, err := newRequestHTTPHostFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "regex_match":
-		return evaluateRegexMatch(e.args, vars, req)
+		f, err := newRegexMatchFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	case "in":
-		return evaluateIn(e.args, vars, req)
+		f, err := newInFunction(e.Args)
+		if err == nil {
+			return f.evaluate(vars, req)
+		}
+		return nil, err
 	default:
-		return nil, fmt.Errorf("function '%s' is not implemented", e.name)
+		return nil, fmt.Errorf("could not find a built-in function with name '%s'", e.Name)
 	}
 }
 
-func (e ifElse) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	guard, err := e.guard.evaluate(vars, req)
+func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	guard, err := e.Guard.Evaluate(vars, req)
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
 	}
@@ -137,13 +209,13 @@ func (e ifElse) evaluate(vars map[string]interface{}, req *http.Request) (interf
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", guard)
 	}
-	var exp expression
+	var exp Expression
 	if guardValue {
-		exp = e.left
+		exp = e.Left
 	} else {
-		exp = e.right
+		exp = e.Right
 	}
-	val, err := exp.evaluate(vars, req)
+	val, err := exp.Evaluate(vars, req)
 	if err != nil {
 		return nil, fmt.Errorf("%v", err)
 	}
@@ -156,9 +228,9 @@ type HttpRsp struct {
 	StatusCode int
 }
 
-type parser func(string, int) (expression, int, error)
+type parser func(string, int) (Expression, int, error)
 
-func stringParser(str string, start int) (expression, int, error) {
+func stringParser(str string, start int) (Expression, int, error) {
 	end := start + 1
 	for {
 		if end >= len(str) {
@@ -177,11 +249,11 @@ func stringParser(str string, start int) (expression, int, error) {
 			continue
 		}
 	}
-	e := &stringIdentity{value: str[start+1 : end]}
+	e := &StringIdentity{Value: str[start+1 : end]}
 	return e, end + 1, nil
 }
 
-func numberParser(str string, start int) (expression, int, error) {
+func numberParser(str string, start int) (Expression, int, error) {
 	end := start
 	dots := 0
 	for {
@@ -203,11 +275,11 @@ func numberParser(str string, start int) (expression, int, error) {
 		}
 		break
 	}
-	var e expression
+	var e Expression
 	if dots == 0 {
-		e = &integerIdentity{value: str[start:end]}
+		e = &IntegerIdentity{Value: str[start:end]}
 	} else {
-		e = &floatIdentity{value: str[start:end]}
+		e = &FloatIdentity{Value: str[start:end]}
 	}
 	return e, end, nil
 }
@@ -229,7 +301,7 @@ func nextToken(str string, start int, match func(byte, int) bool) (int, error) {
 	}
 }
 
-func functionParser(str string, start int) (expression, int, error) {
+func functionParser(str string, start int) (Expression, int, error) {
 	start, err := nextToken(str, start, func(c byte, s int) bool {
 		return isLetterOrNumber(c) || c == '_'
 	})
@@ -258,16 +330,16 @@ func functionParser(str string, start int) (expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	var args []expression
+	var args []Expression
 	args, end, err = parseArgs(str, end+1, ')')
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &function{name: name, args: args}
+	e := &Function{Name: name, Args: args}
 	return e, end, nil
 }
 
-func ifParser(str string, start int) (expression, int, error) {
+func ifParser(str string, start int) (Expression, int, error) {
 	var err error
 	start = start + 2
 	start, err = nextToken(str, start, func(c byte, s int) bool {
@@ -319,17 +391,17 @@ func ifParser(str string, start int) (expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &ifElse{guard: guard, left: left, right: right}
+	e := &IfElse{Guard: guard, Left: left, Right: right}
 	return e, start, nil
 }
 
-func arrayParser(str string, start int) (expression, int, error) {
+func arrayParser(str string, start int) (Expression, int, error) {
 	start = start + 1
 	args, end, err := parseArgs(str, start, ']')
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &arrayIdentity{elements: args}
+	e := &ArrayIdentity{Elements: args}
 	return e, end, nil
 }
 
@@ -357,14 +429,14 @@ func getParser(str string, start int) (parser, int, error) {
 		}
 		if isLetter(c) {
 			if len(str) >= start+4 && str[start:start+4] == "true" {
-				return func(string, int) (expression, int, error) {
-					e := &boolIdentity{value: "true"}
+				return func(string, int) (Expression, int, error) {
+					e := &BoolIdentity{Value: "true"}
 					return e, start + 4, nil
 				}, start, nil
 			}
 			if len(str) >= start+5 && str[start:start+5] == "false" {
-				return func(string, int) (expression, int, error) {
-					e := &boolIdentity{value: "false"}
+				return func(string, int) (Expression, int, error) {
+					e := &BoolIdentity{Value: "false"}
 					return e, start + 5, nil
 				}, start, nil
 			}
@@ -389,12 +461,12 @@ func getParser(str string, start int) (parser, int, error) {
 	}
 }
 
-func parseArgs(str string, start int, endToken byte) ([]expression, int, error) {
-	var r []expression
+func parseArgs(str string, start int, endToken byte) ([]Expression, int, error) {
+	var r []Expression
 	hasToken := true
 	for hasToken {
 		var p parser
-		var e expression
+		var e Expression
 		var err error
 		p, start, err = getParser(str, start)
 		if err != nil {
@@ -432,7 +504,7 @@ func parseArgs(str string, start int, endToken byte) ([]expression, int, error) 
 	return r, start, nil
 }
 
-func ParseExpression(str string) (expression, error) {
+func ParseExpression(str string) (Expression, error) {
 	if strings.Index(str, "${") == 0 && str[len(str)-1] == '}' {
 		str = str[2 : len(str)-1]
 		start := 0
@@ -449,7 +521,7 @@ func ParseExpression(str string) (expression, error) {
 		}
 		return e, nil
 	}
-	e := &stringIdentity{value: str}
+	e := &StringIdentity{Value: str}
 	return e, nil
 }
 

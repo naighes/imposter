@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/naighes/imposter/functions"
 	"gopkg.in/yaml.v2"
 )
 
@@ -88,11 +89,11 @@ func validateRuleExpression(expression string, vars map[string]interface{}) erro
 }
 
 func validateEvaluation(expression string, vars map[string]interface{}) (interface{}, error) {
-	e, err := ParseExpression(expression)
+	e, err := functions.ParseExpression(expression)
 	if err != nil {
 		return nil, err
 	}
-	a, err := e.evaluate(vars, &http.Request{Header: http.Header{}})
+	a, err := e.Evaluate(vars, &http.Request{Header: http.Header{}})
 	if err != nil {
 		return nil, err
 	}

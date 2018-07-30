@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/naighes/imposter/functions"
 )
 
 type Router struct {
@@ -15,7 +16,7 @@ type Router struct {
 }
 
 type route struct {
-	expression expression
+	expression functions.Expression
 	latency    time.Duration
 	handler    http.Handler
 }
@@ -23,7 +24,7 @@ type route struct {
 func (handler *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
 		// TODO: X-Forwarded-Host?
-		a, err := route.expression.evaluate(handler.vars, r)
+		a, err := route.expression.Evaluate(handler.vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -45,7 +46,7 @@ func (handler *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *Router) add(expression expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+func (handler *Router) add(expression functions.Expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
 	handler.routes = append(handler.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
@@ -66,7 +67,7 @@ func NewRouter(config *Config) (*Router, error) {
 	r := Router{}
 	r.vars = vars
 	for _, def := range defs {
-		rule, err := ParseExpression(def.RuleExpression)
+		rule, err := functions.ParseExpression(def.RuleExpression)
 		if err != nil {
 			return nil, err
 		}
@@ -92,11 +93,11 @@ func HandleFunc(o interface{}, options *ConfigOptions, vars map[string]interface
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
-		return MatchRspHttpHandler{Content: &rsp, Vars: vars}.HandleFunc(ParseExpression)
+		return MatchRspHttpHandler{Content: &rsp, Vars: vars}.HandleFunc(functions.ParseExpression)
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHttpHandler{Content: str, Vars: vars}.HandleFunc(ParseExpression)
+		return FuncHttpHandler{Content: str, Vars: vars}.HandleFunc(functions.ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

@@ -7,11 +7,12 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/naighes/imposter/functions"
 	"github.com/spf13/cast"
 )
 
 type HttpHandler interface {
-	HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error)
+	HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error)
 }
 
 type FuncHttpHandler struct {
@@ -19,19 +20,19 @@ type FuncHttpHandler struct {
 	Vars    map[string]interface{}
 }
 
-func (h FuncHttpHandler) HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h FuncHttpHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	e, err := parse(h.Content)
 	if err != nil {
 		return nil, err
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		a, err := e.evaluate(vars, r)
+		a, err := e.Evaluate(vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-		rsp, ok := a.(*HttpRsp)
+		rsp, ok := a.(*functions.HttpRsp)
 		if !ok {
 			writeError(w, fmt.Errorf("full response computing requires a function returning '*HttpRsp' (e.g. 'link', 'redirect', ...); got '%s' instead", reflect.TypeOf(a)))
 			return
@@ -53,8 +54,8 @@ type MatchRspHttpHandler struct {
 	Vars    map[string]interface{}
 }
 
-func evaluateToString(e expression, vars map[string]interface{}, req *http.Request) (string, error) {
-	a, err := e.evaluate(vars, req)
+func evaluateToString(e functions.Expression, vars map[string]interface{}, req *http.Request) (string, error) {
+	a, err := e.Evaluate(vars, req)
 	if err != nil {
 		return "", err
 	}
@@ -67,13 +68,13 @@ func evaluateToString(e expression, vars map[string]interface{}, req *http.Reque
 	return interfaceToString(a)
 }
 
-func (h MatchRspHttpHandler) HandleFunc(parse func(string) (expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h MatchRspHttpHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
 	e, err := parse(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
-	headers := make(map[string]expression)
+	headers := make(map[string]functions.Expression)
 	if rsp.Headers != nil {
 		for k, v := range rsp.Headers {
 			header, ok := v.(string)

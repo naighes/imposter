@@ -1,4 +1,4 @@
-package main
+package functions
 
 import (
 	"fmt"
@@ -15,9 +15,9 @@ func TestIntegerIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, ok := token.(*integerIdentity)
+	_, ok := token.(*IntegerIdentity)
 	if !ok {
-		t.Errorf("expected type '*integerIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*IntegerIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
 }
@@ -29,9 +29,9 @@ func TestFloatIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, ok := token.(*floatIdentity)
+	_, ok := token.(*FloatIdentity)
 	if !ok {
-		t.Errorf("expected type '*floatIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*FloatIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
 }
@@ -43,9 +43,9 @@ func TestStringIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, ok := token.(*stringIdentity)
+	_, ok := token.(*StringIdentity)
 	if !ok {
-		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*StringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
 }
@@ -57,12 +57,12 @@ func TestBoolIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	b, ok := token.(*boolIdentity)
+	b, ok := token.(*BoolIdentity)
 	if !ok {
-		t.Errorf("expected type '*boolIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*BoolIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -85,12 +85,12 @@ func TestArrayIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*arrayIdentity)
+	f, ok := token.(*ArrayIdentity)
 	if !ok {
-		t.Errorf("expected type '*arrayIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*ArrayIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := f.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := f.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error: %v", err)
 		return
@@ -113,12 +113,12 @@ func TestMixedTypeArrayIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*arrayIdentity)
+	f, ok := token.(*ArrayIdentity)
 	if !ok {
-		t.Errorf("expected type '*arrayIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*ArrayIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	_, err = f.evaluate(make(map[string]interface{}), &http.Request{})
+	_, err = f.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err == nil {
 		t.Errorf("expected error")
 		return
@@ -132,12 +132,12 @@ func TestOrEvaluation(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	b, ok := token.(*function)
+	b, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -162,12 +162,12 @@ func TestAndEvaluation(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	b, ok := token.(*function)
+	b, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -190,9 +190,9 @@ func TestBlockWithJustIdentity(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, ok := token.(*stringIdentity)
+	_, ok := token.(*StringIdentity)
 	if !ok {
-		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*StringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
 }
@@ -204,12 +204,12 @@ func TestEmptyString(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	si, ok := token.(*stringIdentity)
+	si, ok := token.(*StringIdentity)
 	if !ok {
-		t.Errorf("expected type '*stringIdentity'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*StringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	s, err := si.evaluate(make(map[string]interface{}), &http.Request{})
+	s, err := si.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -237,27 +237,27 @@ func TestFunctionWithArguments(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*function)
+	f, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	if f.name != "f" {
-		t.Errorf("expected function named '%s'; got '%s'", "f", f.name)
+	if f.Name != "f" {
+		t.Errorf("expected Function named '%s'; got '%s'", "f", f.Name)
 		return
 	}
-	if l := len(f.args); l != 2 {
+	if l := len(f.Args); l != 2 {
 		t.Errorf("expected '%d' argument(s); got '%d'", 2, l)
 		return
 	}
-	arg1, ok := f.args[0].(*stringIdentity)
+	arg1, ok := f.Args[0].(*StringIdentity)
 	if !ok {
-		t.Errorf("expected argument of type '*stringIdentity'; got '%s'", reflect.TypeOf(arg1))
+		t.Errorf("expected argument of type '*StringIdentity'; got '%s'", reflect.TypeOf(arg1))
 		return
 	}
-	arg2, ok := f.args[1].(*integerIdentity)
+	arg2, ok := f.Args[1].(*IntegerIdentity)
 	if !ok {
-		t.Errorf("expected argument of type '*integerIdentity'; got '%s'", reflect.TypeOf(arg2))
+		t.Errorf("expected argument of type '*IntegerIdentity'; got '%s'", reflect.TypeOf(arg2))
 		return
 	}
 }
@@ -269,16 +269,16 @@ func TestFunctionWithoutArguments(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*function)
+	f, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	if f.name != "f" {
-		t.Errorf("expected function named '%s'; got '%s'", "f", f.name)
+	if f.Name != "f" {
+		t.Errorf("expected Function named '%s'; got '%s'", "f", f.Name)
 		return
 	}
-	if l := len(f.args); l != 0 {
+	if l := len(f.Args); l != 0 {
 		t.Errorf("expected '%d' argument(s); got '%d'", 2, l)
 		return
 	}
@@ -299,36 +299,36 @@ func TestNestedFunctions(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*function)
+	f, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	if f.name != expectedFuncName {
-		t.Errorf("expected function named '%s'; got '%s'", expectedFuncName, f.name)
+	if f.Name != expectedFuncName {
+		t.Errorf("expected Function named '%s'; got '%s'", expectedFuncName, f.Name)
 		return
 	}
-	if l := len(f.args); l != 2 {
+	if l := len(f.Args); l != 2 {
 		t.Errorf("expected '%d' argument(s); got '%d'", 2, l)
 		return
 	}
-	arg1, ok := f.args[0].(*stringIdentity)
+	arg1, ok := f.Args[0].(*StringIdentity)
 	if !ok {
-		t.Errorf("expected argument of type '*stringIdentity'; got '%s'", reflect.TypeOf(arg1))
+		t.Errorf("expected argument of type '*StringIdentity'; got '%s'", reflect.TypeOf(arg1))
 		return
 	}
-	g, ok := f.args[1].(*function)
+	g, ok := f.Args[1].(*Function)
 	if !ok {
-		t.Errorf("expected argument of type '*function'; got '%s'", reflect.TypeOf(g))
+		t.Errorf("expected argument of type '*Function'; got '%s'", reflect.TypeOf(g))
 		return
 	}
-	if l := len(g.args); l != 1 {
+	if l := len(g.Args); l != 1 {
 		t.Errorf("expected '%d' argument(s); got '%d'", 1, l)
 		return
 	}
-	arg2, ok := g.args[0].(*integerIdentity)
+	arg2, ok := g.Args[0].(*IntegerIdentity)
 	if !ok {
-		t.Errorf("expected argument of type '*integerIdentity'; got '%s'", reflect.TypeOf(arg2))
+		t.Errorf("expected argument of type '*IntegerIdentity'; got '%s'", reflect.TypeOf(arg2))
 		return
 	}
 }
@@ -344,7 +344,7 @@ func TestEvaluateVar(t *testing.T) {
 	vars := map[string]interface{}{
 		"a": expected,
 	}
-	e, err := token.evaluate(vars, &http.Request{})
+	e, err := token.Evaluate(vars, &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -363,22 +363,22 @@ func TestVarAsFunctionArg(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*function)
+	f, ok := token.(*Function)
 	if !ok {
-		t.Errorf("expected type '*function'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	if f.name != expectedFuncName {
-		t.Errorf("expected function named '%s'; got '%s'", expectedFuncName, f.name)
+	if f.Name != expectedFuncName {
+		t.Errorf("expected Function named '%s'; got '%s'", expectedFuncName, f.Name)
 		return
 	}
-	if l := len(f.args); l != 1 {
+	if l := len(f.Args); l != 1 {
 		t.Errorf("expected '%d' argument(s); got '%d'", 1, l)
 		return
 	}
-	arg1, ok := f.args[0].(*function)
+	arg1, ok := f.Args[0].(*Function)
 	if !ok {
-		t.Errorf("expected argument of type '*function'; got '%s'", reflect.TypeOf(arg1))
+		t.Errorf("expected argument of type '*Function'; got '%s'", reflect.TypeOf(arg1))
 		return
 	}
 }
@@ -395,7 +395,7 @@ func TestComplexIfElseStatement(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -424,12 +424,12 @@ func TestIfElseStatement(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	f, ok := token.(*ifElse)
+	f, ok := token.(*IfElse)
 	if !ok {
-		t.Errorf("expected type '*ifElse'; got '%s'", reflect.TypeOf(token))
+		t.Errorf("expected type '*IfElse'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := f.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := f.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -456,7 +456,7 @@ func TestEvaluateHttpHeader(t *testing.T) {
 	headers := http.Header{
 		"Content-Type": []string{expected},
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Header: headers})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Header: headers})
 	if err != nil {
 		t.Error(err)
 		return
@@ -475,7 +475,7 @@ func TestRequestURL(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{URL: expected})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{URL: expected})
 	if err != nil {
 		t.Error(err)
 		return
@@ -494,7 +494,7 @@ func TestRegexMatch(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -522,7 +522,7 @@ func TestQuery(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{URL: u})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{URL: u})
 	if err != nil {
 		t.Error(err)
 		return
@@ -549,7 +549,7 @@ func TestHTTPMethod(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Method: expected})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Method: expected})
 	if err != nil {
 		t.Error(err)
 		return
@@ -568,7 +568,7 @@ func TestHTTPMethod(t *testing.T) {
 func TestRequestHost(t *testing.T) {
 	const expected = "fak.eurl"
 	str := fmt.Sprintf(`${
-		if (eq(request_host(), "%s"))
+		if (eq(request_http_host(), "%s"))
 			"ok"
 		else
 			"wrong"
@@ -578,7 +578,7 @@ func TestRequestHost(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{Host: expected})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Host: expected})
 	if err != nil {
 		t.Error(err)
 		return
@@ -606,7 +606,7 @@ func TestArrayInTrue(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return
@@ -634,7 +634,7 @@ func TestArrayInFalse(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.evaluate(make(map[string]interface{}), &http.Request{})
+	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
 	if err != nil {
 		t.Error(err)
 		return

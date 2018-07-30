@@ -62,6 +62,6 @@ func TestNonMatchingRule(t *testing.T) {
 	req := http.Request{Method: "GET", URL: url}
 	routes.ServeHTTP(r, &req)
 	if r.Code != expected {
-		t.Errorf("expected status code %d; got %d", expected, r.Code)
+		t.Errorf("expected status code %d; got %d: %s", expected, r.Code, r.Body.String())
 	}
 }

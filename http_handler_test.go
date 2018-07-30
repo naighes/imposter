@@ -6,21 +6,23 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/naighes/imposter/functions"
 )
 
 type fakeExpression struct {
-	rsp *HttpRsp
+	rsp *functions.HttpRsp
 }
 
 type errorExpression struct {
 	err string
 }
 
-func (e fakeExpression) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e fakeExpression) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return e.rsp, nil
 }
 
-func (e errorExpression) evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e errorExpression) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return nil, fmt.Errorf(e.err)
 }
 
@@ -28,8 +30,8 @@ func TestFuncHttpHandlerNoErrors(t *testing.T) {
 	const expectedStatusCode = 200
 	const expectedBody = "some content"
 	r := httptest.NewRecorder()
-	p := func(string) (expression, error) {
-		e := &fakeExpression{rsp: &HttpRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
+	p := func(string) (functions.Expression, error) {
+		e := &fakeExpression{rsp: &functions.HttpRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
 		return e, nil
 	}
 	h := FuncHttpHandler{Content: "unrelevant content"}
@@ -58,7 +60,7 @@ func TestFuncHttpHandlerNoErrors(t *testing.T) {
 func TestFuncHttpHandlerWithErrors(t *testing.T) {
 	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
-	p := func(string) (expression, error) {
+	p := func(string) (functions.Expression, error) {
 		e := &errorExpression{err: "some error"}
 		return e, nil
 	}
@@ -78,8 +80,8 @@ func TestFuncHttpHandlerWithErrors(t *testing.T) {
 func TestFuncHttpHandlerWithoutHttpRsp(t *testing.T) {
 	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
-	p := func(string) (expression, error) {
-		e := &stringIdentity{value: "some value"}
+	p := func(string) (functions.Expression, error) {
+		e := &functions.StringIdentity{Value: "some value"}
 		return e, nil
 	}
 	h := FuncHttpHandler{Content: "unrelevant content"}
