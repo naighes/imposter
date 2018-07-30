@@ -3,6 +3,7 @@ package functions
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 )
 
 type redirectFunction struct {
@@ -25,8 +26,12 @@ func (f *redirectFunction) evaluate(vars map[string]interface{}, req *http.Reque
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
+	u, err := url.Parse(b)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %v", err)
+	}
 	h := make(http.Header)
-	h.Set("Location", b)
+	h.Set("Location", u.String())
 	r := &HttpRsp{Headers: h, StatusCode: 301}
 	return r, nil
 }

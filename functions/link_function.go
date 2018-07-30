@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 )
 
 type linkFunction struct {
@@ -26,7 +27,11 @@ func (f *linkFunction) evaluate(vars map[string]interface{}, req *http.Request) 
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	rsp, err := http.Get(b)
+	u, err := url.Parse(b)
+	if err != nil {
+		return nil, fmt.Errorf("evaluation error: %v", err)
+	}
+	rsp, err := http.Get(u.String())
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %v", err)
 	}
