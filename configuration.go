@@ -74,14 +74,18 @@ func (def *MatchDef) validate(vars map[string]interface{}) []string {
 	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
-
 	var rsp MatchRsp
 	err := mapstructure.Decode(def.Response, &rsp)
 	if err == nil {
 		rr := rsp.validate(vars)
 		r = append(r, rr...)
+	} else {
+		body, _ := def.Response.(string)
+		err := validateComputedBody(body, vars)
+		if err != nil {
+			r = append(r, fmt.Sprintf("%v", err))
+		}
 	}
-
 	return r
 }
 
@@ -115,6 +119,18 @@ func validateRuleExpression(expression string, vars map[string]interface{}) erro
 	_, ok := e.(bool)
 	if !ok {
 		fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(e))
+	}
+	return nil
+}
+
+func validateComputedBody(expression string, vars map[string]interface{}) error {
+	e, err := validateEvaluation(expression, vars)
+	if err != nil {
+		return err
+	}
+	_, ok := e.(*functions.HttpRsp)
+	if !ok {
+		return fmt.Errorf("evaluation error: expected 'HttpRsp' for a computed version of response object; got '%v' instead", reflect.TypeOf(e))
 	}
 	return nil
 }
