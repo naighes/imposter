@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/naighes/imposter/functions"
 	"gopkg.in/yaml.v2"
 )
@@ -71,6 +72,23 @@ func readConfig(configFile string) (*Config, error) {
 func (def *MatchDef) validate(vars map[string]interface{}) []string {
 	var r []string
 	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
+		r = append(r, fmt.Sprintf("%v", err))
+	}
+
+	var rsp MatchRsp
+	err := mapstructure.Decode(def.Response, &rsp)
+	if err == nil {
+		rr := rsp.validate(vars)
+		r = append(r, rr...)
+	}
+
+	return r
+}
+
+func (rsp *MatchRsp) validate(vars map[string]interface{}) []string {
+	var r []string
+	_, err := validateEvaluation(rsp.Body, vars)
+	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
 	return r
