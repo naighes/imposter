@@ -93,7 +93,7 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	if err != nil {
 		return nil, err
 	}
-	a, err := e.Evaluate(vars, &http.Request{Header: http.Header{}})
+	a, err := e.Test(vars, &http.Request{Header: http.Header{}})
 	if err != nil {
 		return nil, err
 	}

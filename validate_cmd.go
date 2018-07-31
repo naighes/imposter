@@ -42,7 +42,7 @@ func validateExec(opts *validateOpts) error {
 	}
 	if l := len(r); l > 0 {
 		const sep = "\n--------------------\n"
-		fmt.Printf("found %d errors%s:", l, sep)
+		fmt.Printf("found %d errors:%s", l, sep)
 		fmt.Printf(strings.Join(r[:], sep))
 		os.Exit(1)
 	}
