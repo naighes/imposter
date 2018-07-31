@@ -11,15 +11,16 @@ type containsFunction struct {
 	value  Expression
 }
 
-func newContainsFunction(args []Expression) (*containsFunction, error) {
+func newContainsFunction(args []Expression) (Expression, error) {
 	if l := len(args); l != 2 {
 		return nil, fmt.Errorf("function 'contains' is expecting two arguments of type 'string'; found %d argument(s) instead", l)
 	}
-	return &containsFunction{source: args[0], value: args[1]}, nil
+	r := containsFunction{source: args[0], value: args[1]}
+	return r, nil
 }
 
-func (f *containsFunction) evaluate(vars map[string]interface{}, req *http.Request) (bool, error) {
-	a, err := f.source.Evaluate(vars, req)
+func (f containsFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
+	a, err := g(f.source)
 	if err != nil {
 		return false, fmt.Errorf("%v", err)
 	}
@@ -28,7 +29,7 @@ func (f *containsFunction) evaluate(vars map[string]interface{}, req *http.Reque
 	if left, ok = a.(string); !ok {
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	b, err := f.value.Evaluate(vars, req)
+	b, err := g(f.value)
 	if err != nil {
 		return false, fmt.Errorf("%v", err)
 	}
@@ -37,4 +38,22 @@ func (f *containsFunction) evaluate(vars map[string]interface{}, req *http.Reque
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	return strings.Index(left, right) != -1, nil
+}
+
+func (f containsFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Evaluate(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
+}
+
+func (f containsFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Test(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
 }

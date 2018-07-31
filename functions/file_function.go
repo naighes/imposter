@@ -10,14 +10,15 @@ type fileFunction struct {
 	path Expression
 }
 
-func newFileFunction(args []Expression) (*fileFunction, error) {
+func newFileFunction(args []Expression) (Expression, error) {
 	if l := len(args); l != 1 {
 		return nil, fmt.Errorf("function 'file' is expecting one argument of type 'string'; found %d argument(s) instead", l)
 	}
-	return &fileFunction{path: args[0]}, nil
+	r := fileFunction{path: args[0]}
+	return r, nil
 }
 
-func (f *fileFunction) evaluate(vars map[string]interface{}, req *http.Request) (string, error) {
+func (f fileFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.path.Evaluate(vars, req)
 	if err != nil {
 		return "", fmt.Errorf("%v", err)
@@ -31,4 +32,16 @@ func (f *fileFunction) evaluate(vars map[string]interface{}, req *http.Request) 
 		return "", err
 	}
 	return string(content), nil
+}
+
+func (f fileFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	a, err := f.path.Test(vars, req)
+	if err != nil {
+		return "", fmt.Errorf("%v", err)
+	}
+	_, ok := a.(string)
+	if !ok {
+		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
+	}
+	return "", nil
 }

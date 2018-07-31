@@ -10,15 +10,16 @@ type inFunction struct {
 	item   Expression
 }
 
-func newInFunction(args []Expression) (*inFunction, error) {
+func newInFunction(args []Expression) (Expression, error) {
 	if l := len(args); l != 2 {
 		return nil, fmt.Errorf("function 'in' is expecting two arguments of type 'string'; found %d argument(s) instead", l)
 	}
-	return &inFunction{source: args[0], item: args[1]}, nil
+	r := inFunction{source: args[0], item: args[1]}
+	return r, nil
 }
 
-func (f *inFunction) evaluate(vars map[string]interface{}, req *http.Request) (bool, error) {
-	a, err := f.source.Evaluate(vars, req)
+func (f inFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
+	a, err := g(f.source)
 	if err != nil {
 		return false, fmt.Errorf("%v", err)
 	}
@@ -27,7 +28,7 @@ func (f *inFunction) evaluate(vars map[string]interface{}, req *http.Request) (b
 	if left, ok = a.([]interface{}); !ok {
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'array'", a)
 	}
-	b, err := f.item.Evaluate(vars, req)
+	b, err := g(f.item)
 	if err != nil {
 		return false, fmt.Errorf("%v", err)
 	}
@@ -37,4 +38,22 @@ func (f *inFunction) evaluate(vars map[string]interface{}, req *http.Request) (b
 		}
 	}
 	return false, nil
+}
+
+func (f inFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Evaluate(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
+}
+
+func (f inFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Test(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
 }

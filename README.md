@@ -89,7 +89,7 @@ pattern_list:
       and(
         contains(request_url_path(), "hello"),
         eq(request_http_method(), "POST"),
-        eq(http_header("Content-Type"), "application/json")
+        eq(request_http_header("Content-Type"), "application/json")
       )
     }
   response:
@@ -172,7 +172,7 @@ The supported built-in functions are:
  * `request_url_query(name: string) -> string` - Returns the first value associated with the given `name`.
  * `request_http_method() -> string` - Returns the HTTP method for the current request.
  * `request_http_host() -> string` - Returns the HTTP Host for the current request.
- * `http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
+ * `request_http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
  * `link(url: string) -> HttpRsp` - Forwards a client to a new URL.
@@ -197,7 +197,7 @@ pattern_list:
   headers:
     Content-Type: text/plain; charset=utf-8
     Content-Language: ${
-      if(contains(http_header("Accept-Language"), "en"))
+      if(contains(request_http_header("Accept-Language"), "en"))
         "en"
       else
         "it"

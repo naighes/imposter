@@ -13,6 +13,7 @@ import (
 
 type Expression interface {
 	Evaluate(map[string]interface{}, *http.Request) (interface{}, error)
+	Test(map[string]interface{}, *http.Request) (interface{}, error)
 }
 
 type IfElse struct {
@@ -50,23 +51,57 @@ func (e StringIdentity) Evaluate(vars map[string]interface{}, req *http.Request)
 	return e.Value, nil
 }
 
+func (e StringIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.Evaluate(vars, req)
+}
+
 func (e IntegerIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.Atoi(e.Value)
+}
+
+func (e IntegerIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.Evaluate(vars, req)
 }
 
 func (e FloatIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseFloat(e.Value, 64)
 }
 
+func (e FloatIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.Evaluate(vars, req)
+}
+
 func (e BoolIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return strconv.ParseBool(e.Value)
 }
 
+func (e BoolIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.Evaluate(vars, req)
+}
+
 func (e ArrayIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	f := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Evaluate(vars, req)
+		}
+	}(vars, req)
+	return e.evaluate(f)
+}
+
+func (e ArrayIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	f := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Test(vars, req)
+		}
+	}(vars, req)
+	return e.evaluate(f)
+}
+
+func (e ArrayIdentity) evaluate(f func(Expression) (interface{}, error)) (interface{}, error) {
 	var r []interface{}
 	var t reflect.Type
 	for index, element := range e.Elements {
-		a, err := element.Evaluate(vars, req)
+		a, err := f(element)
 		if err != nil {
 			return nil, fmt.Errorf("%v", err)
 		}
@@ -85,119 +120,75 @@ func (e ArrayIdentity) Evaluate(vars map[string]interface{}, req *http.Request) 
 	return r, nil
 }
 
-func (e Function) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	switch e.Name {
+type Evaluate func(vars map[string]interface{}, req *http.Request) (interface{}, error)
+
+func getEvaluationFunc(name string) (func(args []Expression) (Expression, error), error) {
+	var b func(args []Expression) (Expression, error)
+	switch name {
 	case "link":
-		f, err := newLinkFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newLinkFunction
 	case "redirect":
-		f, err := newRedirectFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRedirectFunction
 	case "file":
-		f, err := newFileFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newFileFunction
 	case "var":
-		f, err := newVarFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newVarFunction
 	case "and":
-		f, err := newAndFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newAndFunction
 	case "or":
-		f, err := newOrFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newOrFunction
 	case "not":
-		f, err := newNotFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
-	case "http_header":
-		f, err := newHttpHeaderFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newNotFunction
+	case "request_http_header":
+		b = newRequestHTTPHeaderFunction
 	case "eq":
-		f, err := newEqFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newEqFunction
 	case "ne":
-		f, err := newNeFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newNeFunction
 	case "contains":
-		f, err := newContainsFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newContainsFunction
 	case "request_url":
-		f, err := newRequestURLFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRequestURLFunction
 	case "request_url_path":
-		f, err := newRequestURLPathFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRequestURLPathFunction
 	case "request_url_query":
-		f, err := newRequestURLQueryFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRequestURLQueryFunction
 	case "request_http_method":
-		f, err := newRequestHTTPMethodFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRequestHTTPMethodFunction
 	case "request_http_host":
-		f, err := newRequestHTTPHostFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRequestHTTPHostFunction
 	case "regex_match":
-		f, err := newRegexMatchFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newRegexMatchFunction
 	case "in":
-		f, err := newInFunction(e.Args)
-		if err == nil {
-			return f.evaluate(vars, req)
-		}
-		return nil, err
+		b = newInFunction
 	default:
-		return nil, fmt.Errorf("could not find a built-in function with name '%s'", e.Name)
+		return nil, fmt.Errorf("could not find a built-in function with name '%s'", name)
 	}
+	return b, nil
+}
+
+func (e Function) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	b, err := getEvaluationFunc(e.Name)
+	if err != nil {
+		return nil, err
+	}
+	f, err := b(e.Args)
+	if err == nil {
+		return f.Evaluate(vars, req)
+	}
+	return nil, err
+}
+
+func (e Function) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	b, err := getEvaluationFunc(e.Name)
+	if err != nil {
+		return nil, err
+	}
+	f, err := b(e.Args)
+	if err == nil {
+		return f.Test(vars, req)
+	}
+	return nil, err
 }
 
 func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
@@ -220,6 +211,31 @@ func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interf
 		return nil, fmt.Errorf("%v", err)
 	}
 	return val, nil
+}
+
+func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	guard, err := e.Guard.Test(vars, req)
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	_, ok := guard.(bool)
+	if !ok {
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", guard)
+	}
+	left, err := e.Left.Test(vars, req)
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	right, err := e.Right.Test(vars, req)
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	a := reflect.TypeOf(left)
+	b := reflect.TypeOf(right)
+	if a != b {
+		return nil, fmt.Errorf("type mismatch: cannot convert type '%v' to '%v'", a, b)
+	}
+	return left, nil
 }
 
 type HttpRsp struct {

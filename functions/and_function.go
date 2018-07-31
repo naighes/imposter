@@ -9,17 +9,18 @@ type andFunction struct {
 	args []Expression
 }
 
-func newAndFunction(args []Expression) (*andFunction, error) {
+func newAndFunction(args []Expression) (Expression, error) {
 	if l := len(args); l < 2 {
 		return nil, fmt.Errorf("function 'and' is expecting at least two arguments of type 'bool'; found %d argument(s) instead", l)
 	}
-	return &andFunction{args: args}, nil
+	r := andFunction{args: args}
+	return r, nil
 }
 
-func (f *andFunction) evaluate(vars map[string]interface{}, req *http.Request) (bool, error) {
+func (f andFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
 	r := true
 	for _, arg := range f.args {
-		a, err := arg.Evaluate(vars, req)
+		a, err := g(arg)
 		if err != nil {
 			return false, fmt.Errorf("%v", err)
 		}
@@ -30,4 +31,22 @@ func (f *andFunction) evaluate(vars map[string]interface{}, req *http.Request) (
 		r = r && b
 	}
 	return r, nil
+}
+
+func (f andFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Evaluate(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
+}
+
+func (f andFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+		return func(expression Expression) (interface{}, error) {
+			return expression.Test(vars, req)
+		}
+	}(vars, req)
+	return f.evaluate(g)
 }

@@ -22,7 +22,15 @@ func (e fakeExpression) Evaluate(vars map[string]interface{}, req *http.Request)
 	return e.rsp, nil
 }
 
+func (e fakeExpression) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return e.rsp, nil
+}
+
 func (e errorExpression) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+	return nil, fmt.Errorf(e.err)
+}
+
+func (e errorExpression) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	return nil, fmt.Errorf(e.err)
 }
 
