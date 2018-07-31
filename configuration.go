@@ -91,6 +91,19 @@ func (rsp *MatchRsp) validate(vars map[string]interface{}) []string {
 	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
+	if rsp.Headers != nil {
+		for _, v := range rsp.Headers {
+			header, ok := v.(string)
+			if !ok {
+				r = append(r, fmt.Sprintf("expected a value of type 'string'; got '%s' instead", reflect.TypeOf(v)))
+			} else {
+				_, err := validateEvaluation(header, vars)
+				if err != nil {
+					r = append(r, fmt.Sprintf("%v", err))
+				}
+			}
+		}
+	}
 	return r
 }
 
