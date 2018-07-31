@@ -45,9 +45,11 @@ Validate and type-check any `rule_expression` within a configuration file.
 # Usage of imposter validate:
 #   -config-file string
 #         The configuration file
+#   -json
+#         Enable JSON output instead of plain text
 #
 # Example:
-$ ./imposter validate --config-file ./config.yaml
+$ ./imposter validate --config-file ./config.yaml --json
 
 ```
 

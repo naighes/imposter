@@ -497,7 +497,7 @@ func parseArgs(str string, start int, endToken byte) ([]Expression, int, error) 
 		}
 		for {
 			if start >= len(str) {
-				return nil, -1, prettyError("expected token ')'", str, start)
+				return nil, -1, prettyError("unexpected end of string: expected token ')'", str, start)
 			}
 			c := str[start]
 			start = start + 1
@@ -560,7 +560,7 @@ func prettyError(err string, str string, position int) error {
 		b.WriteString("\n")
 		start := acc
 		end := acc + len(token) + 1
-		if start < position && end > position {
+		if start < position && end >= position {
 			for i := acc; i < position; i++ {
 				b.WriteString(" ")
 			}
