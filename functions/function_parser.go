@@ -542,7 +542,7 @@ func ParseExpression(str string) (Expression, error) {
 }
 
 func prettyError(err string, str string, position int) error {
-	const offset = 15
+	const offset = 30
 	l := int(math.Max(float64(position-offset), 0))
 	r := int(math.Min(float64(position+offset), float64(len(str)-1)))
 	s := str[l : r+1]

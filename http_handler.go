@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/naighes/imposter/functions"
-	"github.com/spf13/cast"
 )
 
 type HttpHandler interface {
@@ -54,20 +53,6 @@ type MatchRspHttpHandler struct {
 	Vars    map[string]interface{}
 }
 
-func evaluateToString(e functions.Expression, vars map[string]interface{}, req *http.Request) (string, error) {
-	a, err := e.Evaluate(vars, req)
-	if err != nil {
-		return "", err
-	}
-	if b, ok := a.(string); ok {
-		return b, nil
-	}
-	if b, err := cast.ToStringE(a); err == nil {
-		return b, nil
-	}
-	return interfaceToString(a)
-}
-
 func (h MatchRspHttpHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
 	e, err := parse(rsp.Body)
@@ -90,45 +75,24 @@ func (h MatchRspHttpHandler) HandleFunc(parse func(string) (functions.Expression
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := evaluateToString(e, vars, r)
+		b, err := e.Evaluate(vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
 		for k, v := range headers {
-			v1, err := evaluateToString(v, vars, r)
+			v1, err := v.Evaluate(vars, r)
 			if err != nil {
 				writeError(w, err)
 				return
 			}
-			w.Header().Set(k, v1)
+			w.Header().Set(k, fmt.Sprintf("%v", v1))
 		}
 		if rsp.StatusCode > 0 {
 			w.WriteHeader(rsp.StatusCode)
 		} else {
 			w.WriteHeader(200)
 		}
-		fmt.Fprintf(w, b)
+		fmt.Fprintf(w, "%v", b)
 	}, nil
-}
-
-// TODO: due to the lack of toString method in golang
-func interfaceToString(i interface{}) (string, error) {
-	a, ok := i.([]interface{})
-	if !ok {
-		return "", nil // TODO
-	}
-	var r []string
-	for _, v := range a {
-		e, err := cast.ToStringE(v)
-		if err != nil {
-			return "", fmt.Errorf("%v", err)
-		}
-		r = append(r, e)
-	}
-	var buffer bytes.Buffer
-	buffer.WriteString("[")
-	buffer.WriteString(strings.Join(r, ","))
-	buffer.WriteString("]")
-	return buffer.String(), nil
 }
