@@ -11,6 +11,8 @@ import (
 	"strings"
 )
 
+type ExpressionParser = func(string) (Expression, error)
+
 type Expression interface {
 	Evaluate(map[string]interface{}, *http.Request) (interface{}, error)
 	Test(map[string]interface{}, *http.Request) (interface{}, error)

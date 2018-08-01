@@ -9,7 +9,7 @@ import (
 )
 
 type HTTPHandler interface {
-	HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error)
+	HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error)
 }
 
 type FuncHTTPHandler struct {
@@ -17,7 +17,7 @@ type FuncHTTPHandler struct {
 	Vars    map[string]interface{}
 }
 
-func (h FuncHTTPHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h FuncHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
 	e, err := parse(h.Content)
 	if err != nil {
 		return nil, err
@@ -51,25 +51,15 @@ type MatchRspHTTPHandler struct {
 	Vars    map[string]interface{}
 }
 
-func (h MatchRspHTTPHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
 	e, err := parse(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
-	headers := make(map[string]functions.Expression)
-	if rsp.Headers != nil {
-		for k, v := range rsp.Headers {
-			header, ok := v.(string)
-			if !ok {
-				return nil, fmt.Errorf("expected a value of type 'string'; got '%s' instead", reflect.TypeOf(v))
-			}
-			he, err := parse(header)
-			if err != nil {
-				return nil, err
-			}
-			headers[k] = he
-		}
+	headers, err := rsp.EvaluateHeaders(parse)
+	if err != nil {
+		return nil, err
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {

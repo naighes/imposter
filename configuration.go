@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/mitchellh/mapstructure"
 	"github.com/naighes/imposter/functions"
 	"gopkg.in/yaml.v2"
@@ -69,7 +70,7 @@ func readConfig(configFile string) (*Config, error) {
 	return &Config{}, err
 }
 
-func (def *MatchDef) validate(vars map[string]interface{}) []string {
+func (def *MatchDef) validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
 	var r []string
 	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
@@ -77,7 +78,7 @@ func (def *MatchDef) validate(vars map[string]interface{}) []string {
 	var rsp MatchRsp
 	err := mapstructure.Decode(def.Response, &rsp)
 	if err == nil {
-		rr := rsp.validate(vars)
+		rr := rsp.validate(parse, vars)
 		r = append(r, rr...)
 	} else {
 		body, _ := def.Response.(string)
@@ -89,22 +90,17 @@ func (def *MatchDef) validate(vars map[string]interface{}) []string {
 	return r
 }
 
-func (rsp *MatchRsp) validate(vars map[string]interface{}) []string {
+func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
 	var r []string
 	_, err := validateEvaluation(rsp.Body, vars)
 	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
-	if rsp.Headers != nil {
-		for _, v := range rsp.Headers {
-			header, ok := v.(string)
-			if !ok {
-				r = append(r, fmt.Sprintf("expected a value of type 'string'; got '%s' instead", reflect.TypeOf(v)))
-			} else {
-				_, err := validateEvaluation(header, vars)
-				if err != nil {
-					r = append(r, fmt.Sprintf("%v", err))
-				}
+	_, err = rsp.EvaluateHeaders(parse)
+	if err != nil {
+		if errors, ok := err.(*multierror.Error); ok {
+			for err := range errors.Errors {
+				r = append(r, fmt.Sprintf("%v", err))
 			}
 		}
 	}
@@ -145,4 +141,28 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 		return nil, err
 	}
 	return a, nil
+}
+
+func (rsp *MatchRsp) EvaluateHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
+	headers := make(map[string]functions.Expression)
+	var errors error
+	if rsp.Headers != nil {
+		for k, v := range rsp.Headers {
+			header, ok := v.(string)
+			if !ok {
+				errors = multierror.Append(errors, fmt.Errorf("expected a value of type 'string'; got '%v' instead", reflect.TypeOf(v)))
+				continue
+			}
+			he, err := parse(header)
+			if err != nil {
+				errors = multierror.Append(errors, err)
+				continue
+			}
+			headers[k] = he
+		}
+	}
+	if errors != nil {
+		return nil, errors
+	}
+	return headers, nil
 }

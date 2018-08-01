@@ -2,13 +2,15 @@ package main
 
 import (
 	"testing"
+
+	"github.com/naighes/imposter/functions"
 )
 
 func TestNonBooleanRuleExpression(t *testing.T) {
 	rsp := MatchRsp{}
 	def := &MatchDef{RuleExpression: `${"some string"}`, Response: &rsp}
 	vars := make(map[string]interface{})
-	errors := def.validate(vars)
+	errors := def.validate(functions.ParseExpression, vars)
 	const expected = 1
 	if l := len(errors); l != expected {
 		t.Errorf("expected %d error(s); got %d instead", expected, l)
@@ -20,7 +22,7 @@ func TestBooleanRuleExpression(t *testing.T) {
 	rsp := MatchRsp{}
 	def := &MatchDef{RuleExpression: `${true}`, Response: &rsp}
 	vars := make(map[string]interface{})
-	errors := def.validate(vars)
+	errors := def.validate(functions.ParseExpression, vars)
 	const expected = 0
 	if l := len(errors); l != expected {
 		t.Errorf("expected %d error(s); got %d instead", expected, l)
@@ -32,7 +34,7 @@ func TestBodyExpressionSyntaxError(t *testing.T) {
 	rsp := MatchRsp{Body: `${var("www"}`}
 	def := &MatchDef{RuleExpression: `${true}`, Response: &rsp}
 	vars := make(map[string]interface{})
-	errors := def.validate(vars)
+	errors := def.validate(functions.ParseExpression, vars)
 	const expected = 1
 	if l := len(errors); l != expected {
 		t.Errorf("expected %d error(s); got %d instead", expected, l)
@@ -47,7 +49,7 @@ func TestHeaderExpressionSyntaxError(t *testing.T) {
 	rsp := MatchRsp{Headers: h}
 	def := &MatchDef{RuleExpression: `${true}`, Response: &rsp}
 	vars := make(map[string]interface{})
-	errors := def.validate(vars)
+	errors := def.validate(functions.ParseExpression, vars)
 	const expected = 1
 	if l := len(errors); l != expected {
 		t.Errorf("expected %d error(s); got %d instead", expected, l)
