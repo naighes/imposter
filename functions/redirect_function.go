@@ -33,7 +33,7 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 	}
 	h := make(http.Header)
 	h.Set("Location", u.String())
-	r := &HttpRsp{Headers: h, StatusCode: 301}
+	r := &HTTPRsp{Headers: h, StatusCode: 301}
 	return r, nil
 }
 
@@ -48,6 +48,6 @@ func (f redirectFunction) Test(vars map[string]interface{}, req *http.Request) (
 	}
 	h := make(http.Header)
 	h.Set("Location", b)
-	r := &HttpRsp{Headers: h, StatusCode: 301}
+	r := &HTTPRsp{Headers: h, StatusCode: 301}
 	return r, nil
 }

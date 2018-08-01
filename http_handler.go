@@ -1,25 +1,23 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 
 	"github.com/naighes/imposter/functions"
 )
 
-type HttpHandler interface {
+type HTTPHandler interface {
 	HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error)
 }
 
-type FuncHttpHandler struct {
+type FuncHTTPHandler struct {
 	Content string
 	Vars    map[string]interface{}
 }
 
-func (h FuncHttpHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h FuncHTTPHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	e, err := parse(h.Content)
 	if err != nil {
 		return nil, err
@@ -31,12 +29,12 @@ func (h FuncHttpHandler) HandleFunc(parse func(string) (functions.Expression, er
 			writeError(w, err)
 			return
 		}
-		rsp, ok := a.(*functions.HttpRsp)
+		rsp, ok := a.(*functions.HTTPRsp)
 		if !ok {
-			writeError(w, fmt.Errorf("full response computing requires a function returning '*HttpRsp' (e.g. 'link', 'redirect', ...); got '%s' instead", reflect.TypeOf(a)))
+			writeError(w, fmt.Errorf("full response computing requires a function returning '*HTTPRsp' (e.g. 'link', 'redirect', ...); got '%s' instead", reflect.TypeOf(a)))
 			return
 		}
-		for k, _ := range rsp.Headers {
+		for k := range rsp.Headers {
 			w.Header().Set(k, rsp.Headers.Get(k))
 		}
 		if rsp.StatusCode > 0 {
@@ -48,12 +46,12 @@ func (h FuncHttpHandler) HandleFunc(parse func(string) (functions.Expression, er
 	}, nil
 }
 
-type MatchRspHttpHandler struct {
+type MatchRspHTTPHandler struct {
 	Content *MatchRsp
 	Vars    map[string]interface{}
 }
 
-func (h MatchRspHttpHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
+func (h MatchRspHTTPHandler) HandleFunc(parse func(string) (functions.Expression, error)) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
 	e, err := parse(rsp.Body)
 	if err != nil {

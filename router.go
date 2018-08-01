@@ -93,11 +93,11 @@ func HandleFunc(o interface{}, options *ConfigOptions, vars map[string]interface
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
-		return MatchRspHttpHandler{Content: &rsp, Vars: vars}.HandleFunc(functions.ParseExpression)
+		return MatchRspHTTPHandler{Content: &rsp, Vars: vars}.HandleFunc(functions.ParseExpression)
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHttpHandler{Content: str, Vars: vars}.HandleFunc(functions.ParseExpression)
+		return FuncHTTPHandler{Content: str, Vars: vars}.HandleFunc(functions.ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

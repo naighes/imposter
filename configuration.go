@@ -118,7 +118,7 @@ func validateRuleExpression(expression string, vars map[string]interface{}) erro
 	}
 	_, ok := e.(bool)
 	if !ok {
-		fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(e))
+		return fmt.Errorf("evaluation error: expected 'bool' for any rule expression; got '%v' instead", reflect.TypeOf(e))
 	}
 	return nil
 }
@@ -128,9 +128,9 @@ func validateComputedBody(expression string, vars map[string]interface{}) error 
 	if err != nil {
 		return err
 	}
-	_, ok := e.(*functions.HttpRsp)
+	_, ok := e.(*functions.HTTPRsp)
 	if !ok {
-		return fmt.Errorf("evaluation error: expected 'HttpRsp' for a computed version of response object; got '%v' instead", reflect.TypeOf(e))
+		return fmt.Errorf("evaluation error: expected 'HTTPRsp' for a computed version of response object; got '%v' instead", reflect.TypeOf(e))
 	}
 	return nil
 }

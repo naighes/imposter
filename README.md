@@ -114,7 +114,7 @@ pattern_list:
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
-Note: the computed version of response object requires functions returning `HttpRsp` (e.g. `link`, `redirect`, …).  
+Note: the computed version of response object requires functions returning `HTTPRsp` (e.g. `link`, `redirect`, …).  
 
 Alternatively, you can rely on a full structured version of the response object:
 
@@ -177,8 +177,8 @@ The supported built-in functions are:
  * `request_http_header(name: string) -> string` - Returns the value of the HTTP header with the specified `name` for the current request.
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
- * `link(url: string) -> HttpRsp` - Forwards a client to a new URL.
- * `redirect(url: string) -> HttpRsp` - Redirects a client to a new URL with a 301 status code.
+ * `link(url: string) -> HTTPRsp` - Forwards a client to a new URL.
+ * `redirect(url: string) -> HTTPRsp` - Redirects a client to a new URL with a 301 status code.
  * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element within the `source` array  object.
 
 #### Conditional statements

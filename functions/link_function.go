@@ -41,7 +41,7 @@ func (f linkFunction) Evaluate(vars map[string]interface{}, req *http.Request) (
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %v", err)
 	}
-	r := &HttpRsp{Body: string(body), Headers: rsp.Header, StatusCode: rsp.StatusCode}
+	r := &HTTPRsp{Body: string(body), Headers: rsp.Header, StatusCode: rsp.StatusCode}
 	return r, nil
 }
 
@@ -55,6 +55,6 @@ func (f linkFunction) Test(vars map[string]interface{}, req *http.Request) (inte
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
 	h := make(http.Header)
-	r := &HttpRsp{Body: "", Headers: h, StatusCode: 200}
+	r := &HTTPRsp{Body: "", Headers: h, StatusCode: 200}
 	return r, nil
 }

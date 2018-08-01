@@ -11,7 +11,7 @@ import (
 )
 
 type fakeExpression struct {
-	rsp *functions.HttpRsp
+	rsp *functions.HTTPRsp
 }
 
 type errorExpression struct {
@@ -34,15 +34,15 @@ func (e errorExpression) Test(vars map[string]interface{}, req *http.Request) (i
 	return nil, fmt.Errorf(e.err)
 }
 
-func TestFuncHttpHandlerNoErrors(t *testing.T) {
+func TestFuncHTTPHandlerNoErrors(t *testing.T) {
 	const expectedStatusCode = 200
 	const expectedBody = "some content"
 	r := httptest.NewRecorder()
 	p := func(string) (functions.Expression, error) {
-		e := &fakeExpression{rsp: &functions.HttpRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
+		e := &fakeExpression{rsp: &functions.HTTPRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
 		return e, nil
 	}
-	h := FuncHttpHandler{Content: "unrelevant content"}
+	h := FuncHTTPHandler{Content: "unrelevant content"}
 	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
@@ -65,14 +65,14 @@ func TestFuncHttpHandlerNoErrors(t *testing.T) {
 	}
 }
 
-func TestFuncHttpHandlerWithErrors(t *testing.T) {
+func TestFuncHTTPHandlerWithErrors(t *testing.T) {
 	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
 	p := func(string) (functions.Expression, error) {
 		e := &errorExpression{err: "some error"}
 		return e, nil
 	}
-	h := FuncHttpHandler{Content: "unrelevant content"}
+	h := FuncHTTPHandler{Content: "unrelevant content"}
 	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")
@@ -85,14 +85,14 @@ func TestFuncHttpHandlerWithErrors(t *testing.T) {
 	}
 }
 
-func TestFuncHttpHandlerWithoutHttpRsp(t *testing.T) {
+func TestFuncHTTPHandlerWithoutHTTPRsp(t *testing.T) {
 	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
 	p := func(string) (functions.Expression, error) {
 		e := &functions.StringIdentity{Value: "some value"}
 		return e, nil
 	}
-	h := FuncHttpHandler{Content: "unrelevant content"}
+	h := FuncHTTPHandler{Content: "unrelevant content"}
 	f, err := h.HandleFunc(p)
 	if err != nil {
 		t.Errorf("HandleFunc raised an error")

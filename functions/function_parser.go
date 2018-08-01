@@ -238,7 +238,7 @@ func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{
 	return left, nil
 }
 
-type HttpRsp struct {
+type HTTPRsp struct {
 	Body       string
 	Headers    http.Header
 	StatusCode int
