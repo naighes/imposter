@@ -96,7 +96,7 @@ func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]
 	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
-	_, err = rsp.EvaluateHeaders(parse)
+	_, err = rsp.ParseHeaders(parse)
 	if err != nil {
 		if errors, ok := err.(*multierror.Error); ok {
 			for err := range errors.Errors {
@@ -143,7 +143,7 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	return a, nil
 }
 
-func (rsp *MatchRsp) EvaluateHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
+func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
 	headers := make(map[string]functions.Expression)
 	var errors error
 	if rsp.Headers != nil {

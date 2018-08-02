@@ -57,7 +57,7 @@ func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(
 	if err != nil {
 		return nil, err
 	}
-	headers, err := rsp.EvaluateHeaders(parse)
+	headers, err := rsp.ParseHeaders(parse)
 	if err != nil {
 		return nil, err
 	}
