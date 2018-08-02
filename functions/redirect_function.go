@@ -7,14 +7,15 @@ import (
 )
 
 type redirectFunction struct {
-	url Expression
+	url        Expression
+	statusCode Expression
 }
 
 func newRedirectFunction(args []Expression) (Expression, error) {
-	if l := len(args); l != 1 {
-		return nil, fmt.Errorf("function 'redirect' is expecting one argument of type 'string'; found %d argument(s) instead", l)
+	if l := len(args); l != 2 {
+		return nil, fmt.Errorf("function 'redirect' is expecting two arguments ('string', 'int'); found %d argument(s) instead", l)
 	}
-	r := redirectFunction{url: args[0]}
+	r := redirectFunction{url: args[0], statusCode: args[1]}
 	return r, nil
 }
 
@@ -27,13 +28,24 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
+	c, err := f.statusCode.Evaluate(vars, req)
+	if err != nil {
+		return nil, fmt.Errorf("%v", err)
+	}
+	statusCode, ok := c.(int)
+	if !ok {
+		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'int'", c)
+	}
 	u, err := url.Parse(b)
 	if err != nil {
 		return nil, fmt.Errorf("evaluation error: %v", err)
 	}
+	if statusCode < 300 || statusCode >= 400 {
+		return nil, fmt.Errorf("evaluation error: expected status code '3XX'; got '%d' instead", statusCode)
+	}
 	h := make(http.Header)
 	h.Set("Location", u.String())
-	r := &HTTPRsp{Headers: h, StatusCode: 301}
+	r := &HTTPRsp{Headers: h, StatusCode: statusCode}
 	return r, nil
 }
 

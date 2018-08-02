@@ -115,7 +115,7 @@ For example, you can define it in a computed manner:
 ```yaml
 pattern_list:
 - rule_expression: ${regex_match(request_url_path(), "^/myredirect$")}
-  response: ${redirect("http://examp.lecom/foo")}
+  response: ${redirect("http://examp.lecom/foo", 301)}
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
@@ -153,7 +153,7 @@ pattern_list:
         eq(request_http_method(), "GET")
       )
     }
-  response: ${redirect(var("imposter_link"))}
+  response: ${redirect(var("imposter_link", 301))}
 vars:
   imposter_link: https://github.com/naighes/imposter
 ```
@@ -183,7 +183,7 @@ The supported built-in functions are:
  * `regex_match(source: string, pattern: string) -> bool` - Searches the specified `source` string for the first occurrence of the specified regular expression `pattern` and returns a value indicating whether the match is successful.
  * `file(path: string) -> string` - Reads the content of a file into a string.
  * `link(url: string) -> HTTPRsp` - Forwards a client to a new URL.
- * `redirect(url: string) -> HTTPRsp` - Redirects a client to a new URL with a 301 status code.
+ * `redirect(url: string, status_code: int) -> HTTPRsp` - Redirects a client to a new URL with the specified `status_code` (it must be a 3XX value).
  * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element within the `source` array  object.
 
 #### Conditional statements

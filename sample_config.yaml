@@ -46,7 +46,7 @@ pattern_list:
       Cache-Control: ${request_http_header("Cache-Control")}
     status_code: ${200}
 - rule_expression: ${regex_match(request_url_path(), "^/myredirect$")}
-  response: ${redirect("http://localhost:8080/111")}
+  response: ${redirect("http://localhost:8080/111", 301)}
 - rule_expression: ${regex_match(request_url_path(), "^/[a-z]+$")}
   response:
     body: Hello, string!
