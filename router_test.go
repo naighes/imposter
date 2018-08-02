@@ -23,7 +23,7 @@ func TestEmptyRuleSet(t *testing.T) {
 
 func TestMatchingRule(t *testing.T) {
 	const expected = 200
-	rsp := MatchRsp{Body: "hello", StatusCode: expected}
+	rsp := MatchRsp{Body: "hello", StatusCode: "${200}"}
 	def := MatchDef{RuleExpression: `${
 		regex_match(request_url_path(), "^/[0-9]+$")
 	}`, Response: &rsp}
@@ -44,7 +44,7 @@ func TestMatchingRule(t *testing.T) {
 
 func TestNonMatchingRule(t *testing.T) {
 	const expected = 404
-	rsp := MatchRsp{Body: "", StatusCode: 200}
+	rsp := MatchRsp{Body: "", StatusCode: "${200}"}
 	def := MatchDef{RuleExpression: `${
 		and(
 			eq(request_http_method(), "GET"),

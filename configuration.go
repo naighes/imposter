@@ -34,7 +34,7 @@ type MatchDef struct {
 type MatchRsp struct {
 	Body       string                 `mapstructure:"body"`
 	Headers    map[string]interface{} `mapstructure:"headers"`
-	StatusCode int                    `mapstructure:"status_code"`
+	StatusCode string                 `mapstructure:"status_code"`
 }
 
 func ParseConfig(j []byte) (*Config, error) {
@@ -96,7 +96,7 @@ func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]
 	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
-	_, err = rsp.ParseHeaders(parse)
+	_, err = rsp.parseHeaders(parse)
 	if err != nil {
 		if errors, ok := err.(*multierror.Error); ok {
 			for err := range errors.Errors {
@@ -143,7 +143,7 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	return a, nil
 }
 
-func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
+func (rsp *MatchRsp) parseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
 	headers := make(map[string]functions.Expression)
 	var errors error
 	if rsp.Headers != nil {
@@ -165,4 +165,15 @@ func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]
 		return nil, errors
 	}
 	return headers, nil
+}
+
+func (rsp *MatchRsp) parseStatusCode(parse functions.ExpressionParser) (functions.Expression, error) {
+	if rsp.StatusCode == "" {
+		return parse("${200}")
+	}
+	e, err := parse(rsp.StatusCode)
+	if err != nil {
+		return nil, err
+	}
+	return e, nil
 }

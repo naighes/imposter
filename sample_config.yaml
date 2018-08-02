@@ -11,13 +11,13 @@ pattern_list:
     body: Hello, complex rule!
     headers:
       Content-Type: text/plain; charset=utf-8
-    status_code: 200
+    status_code: ${200}
 - rule_expression: ${regex_match(request_url_path(), "^/myarray$")}
   response:
-    body: ${["Hello", " world!"]}
+    body: "${[\"Hello\", \" world!\"]}"
     headers:
       Content-Type: text/plain; charset=utf-8
-    status_code: 200
+    status_code: ${200}
 - rule_expression: ${
       and(
         regex_match(request_url_path(), "^/mypost$"),
@@ -29,7 +29,7 @@ pattern_list:
     body: Hello, post!
     headers:
       Content-Type: text/plain; charset=utf-8
-    status_code: 200
+    status_code: ${200}
 - rule_expression: ${regex_match(request_url_path(), "^/mylink$")}
   response: ${link(var("some_link"))}
 - rule_expression: ${regex_match(request_url_path(), "^/myfile$")}
@@ -44,7 +44,7 @@ pattern_list:
             "it"
         }
       Cache-Control: ${request_http_header("Cache-Control")}
-    status_code: 200
+    status_code: ${200}
 - rule_expression: ${regex_match(request_url_path(), "^/myredirect$")}
   response: ${redirect("http://localhost:8080/111")}
 - rule_expression: ${regex_match(request_url_path(), "^/[a-z]+$")}
@@ -52,18 +52,18 @@ pattern_list:
     body: Hello, string!
     headers:
       Content-Type: text/plain; charset=utf-8
-    status_code: 200
+    status_code: ${200}
 - rule_expression: ${regex_match(request_url_path(), "^/[0-9]+$")}
   response:
     body: Hello, number!
     headers:
       Content-Type: text/plain; charset=utf-8
       X-Test: some additional header
-    status_code: 404
+    status_code: ${404}
 - rule_expression: ${true}
   response:
     body: Hello, default body!
-    status_code: 200
+    status_code: ${200}
 options:
   enable_cors: true
 vars:

@@ -40,7 +40,7 @@ func (h FuncHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http
 		if rsp.StatusCode > 0 {
 			w.WriteHeader(rsp.StatusCode)
 		} else {
-			w.WriteHeader(200)
+			writeError(w, fmt.Errorf("expected a positive 'int' value for status code; got '%d' instead", rsp.StatusCode))
 		}
 		fmt.Fprintf(w, rsp.Body)
 	}, nil
@@ -53,17 +53,26 @@ type MatchRspHTTPHandler struct {
 
 func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
 	rsp := h.Content
-	e, err := parse(rsp.Body)
+	e1, err := parse(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
-	headers, err := rsp.ParseHeaders(parse)
+	headers, err := rsp.parseHeaders(parse)
+	if err != nil {
+		return nil, err
+	}
+	e2, err := rsp.parseStatusCode(parse)
 	if err != nil {
 		return nil, err
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := e.Evaluate(vars, r)
+		b, err := e1.Evaluate(vars, r)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+		statusCode, err := evaluateStatusCode(e2, vars, r)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -76,11 +85,22 @@ func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(
 			}
 			w.Header().Set(k, fmt.Sprintf("%v", v1))
 		}
-		if rsp.StatusCode > 0 {
-			w.WriteHeader(rsp.StatusCode)
-		} else {
-			w.WriteHeader(200)
-		}
+		w.WriteHeader(statusCode)
 		fmt.Fprintf(w, "%v", b)
 	}, nil
+}
+
+func evaluateStatusCode(e functions.Expression, vars map[string]interface{}, r *http.Request) (int, error) {
+	s, err := e.Evaluate(vars, r)
+	if err != nil {
+		return 0, err
+	}
+	statusCode, ok := s.(int)
+	if !ok {
+		return 0, fmt.Errorf("expected an 'int' value for status code; got '%v' instead", reflect.TypeOf(s))
+	}
+	if statusCode <= 0 {
+		return 0, fmt.Errorf("expected a positive 'int' value for status code; got '%d' instead", statusCode)
+	}
+	return statusCode, nil
 }

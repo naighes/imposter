@@ -1,8 +1,8 @@
 # naighes/imposter [![Build Status](https://travis-ci.com/naighes/imposter.svg?branch=master)](https://travis-ci.com/naighes/imposter)
 
-![Imposter Logo](https://raw.githubusercontent.com/naighes/imposter/master/readme_files/logo.png)
+![imPOSTer Logo](https://raw.githubusercontent.com/naighes/imposter/master/readme_files/logo.png)
 
-**Imposter** is a lightweight and versatile tool for the mocking of web applications.
+**imPOSTer** is a lightweight and versatile tool for the mocking of web applications.
 
 ## Source
 You need `go` installed and `GOBIN` in your `PATH`. Once that is done, run the
@@ -14,25 +14,20 @@ $ go get -u github.com/naighes/imposter
 ---
 
 ## Start command
-Run a new instance of **imposter**.
+Run a new instance of **imPOSTer**.
+
+### Arguments
+
+ * `-config-file <string>`: the configuration file path
+ * `-graceful-timeout <duration>`: the duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m (default 15s)
+ * `-port <int>`: the listening TCP port (default 8080)
+ * `-tls-cert-file-list <string>`: a comma separated list of x.509 certificates to secure communication
+ * `-tls-key-file-list <string>`: a comma separated list of private key files corresponding to the x.509 certificates listed in `-tls-cert-file-list <string>`
+
+### Example
 
 ```sh
-
-# Usage of imposter start:
-#   -config-file <string>
-#       The configuration file
-#   -graceful-timeout <duration>
-#       The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m (default 15s)
-#   -port <int>
-#       The listening TCP port (default 8080)
-#   -tls-cert-file-list <string>
-#       A comma separated list of x.509 certificates to secure communication
-#   -tls-key-file-list <string>
-#       A comma separated list of private key files corresponding to the x.509 certificates
-#
-# Example:
 $ ./imposter start --config-file ./config.yaml --port 3000
-
 ```
 
 ---
@@ -40,17 +35,25 @@ $ ./imposter start --config-file ./config.yaml --port 3000
 ## Validate command
 Validate and type-check any `rule_expression` within a configuration file.
 
+### Arguments
+
+ * `-config-file <string>`: the configuration file path
+ * `-json <string>`: enable JSON output instead of plain text
+
+### Example
+
 ```sh
-
-# Usage of imposter validate:
-#   -config-file string
-#         The configuration file
-#   -json
-#         Enable JSON output instead of plain text
-#
-# Example:
 $ ./imposter validate --config-file ./config.yaml --json
-
+```
+```
+found 2 errors:
+--------------------
+could not find a built-in function with name 'eqrequest_http_method'
+--------------------
+could not find a parser for the current token
+...
+gex_match(request_url_path(), ^/myredirect$")
+                              ^
 ```
 
 ## Configuration file
@@ -65,7 +68,7 @@ We're going to write our first configuration now to launch an instance with a si
     "rule_expression": "${true}",
     "response": {
       "body": "Hello, default body!",
-      "status_code": 200
+      "status_code": "${200}"
     }
   }]
 }
@@ -78,10 +81,10 @@ pattern_list:
 - rule_expression: ${true}
   response:
     body: Hello, default body!
-    status_code: 200
+    status_code: ${200}
 ```
 
-`pattern_list` is a list of _rules_ defining how **imposter** will handle incoming requests. Every rule requires a boolean expression. That is, if an incoming request URL matches one of the `rule_expression` the corresponding `response` is served.  
+`pattern_list` is a list of _rules_ defining how **imPOSTer** will handle incoming requests. Every rule requires a boolean expression. That is, if an incoming request URL matches one of the `rule_expression` the corresponding `response` is served.  
 
 Let's suppose you need to catch all requests issued by `POST` HTTP method, every URL path containing the string `hello` and just a `Content-Type` header of type `application/json`:
 
@@ -96,10 +99,12 @@ pattern_list:
     }
   response:
     body: Hello, complex rule!
-    status_code: 200
+    status_code: ${200}
 ```
 
-Last but not least, you need to define the HTTP `status_code` to be returned (200 when not specified).  
+Last but not least, you need to define the HTTP `status_code` to be returned (200 when not specified).
+Note that `status_code` is an expression itself and so it needs to be wrapped into the block marker (`${...}`).
+Furthermore, a positive integer value is expected from its evaluation (e.g. `status_code: ${if(contains(request_http_header("Accept-Language"), "it")) 200 else 404}`).  
 Rules are tested in the order they were added to the `pattern_list` collection. If two rules match, the first one wins:
 
 ### The response object
@@ -114,7 +119,7 @@ pattern_list:
 ```
 
 The above snippet shows how you can benefit from built-in functions (`redirect`) to achieve interesting results (e.g. redirecting to different URLs).  
-Note: the computed version of response object requires functions returning `HTTPRsp` (e.g. `link`, `redirect`, …).  
+**Note:** the computed version of the response object requires functions returning `HTTPRsp` (e.g. `link`, `redirect`, …).  
 
 Alternatively, you can rely on a full structured version of the response object:
 
@@ -127,7 +132,7 @@ Alternatively, you can rely on a full structured version of the response object:
       "headers": {
         "Content-Type": "text/plain; charset=utf-8"
       },
-      "status_code": 202
+      "status_code": "${202}"
     }
   }]
 }
@@ -155,7 +160,7 @@ vars:
 
 ### Built-in functions
 
-Embedded within strings you can interpolate other values. These interpolations are wrapped in `${}`, such as `${link("https://github.com/naighes/imposter")}`.  
+You can "combine" values with other values. These combinations are wrapped into the evaluation block marker (`${…}`), such as `${link("https://github.com/naighes/imposter")}`.  
 Imposter ships with built-in functions. Functions are called with the syntax `function_name(arg1, arg2, ...)`. For example, to read a file: `${file("path.txt")}`.
 
 #### Supported built-in functions
@@ -204,7 +209,7 @@ pattern_list:
       else
         "it"
     }
-  status_code: 200
+  status_code: ${200}
 ```
 
 ## License

@@ -69,11 +69,11 @@ func (o *startOpts) buildListenAndServe(server *http.Server) (func() error, erro
 func startExec(opts *startOpts) error {
 	config, err := readConfig(opts.configFile)
 	if err != nil {
-		return fmt.Errorf("could not load configuration: %v\n", err)
+		return fmt.Errorf("could not load configuration: %v", err)
 	}
 	router, err := NewRouter(config)
 	if err != nil {
-		return fmt.Errorf("could not load configuration: %v\n", err)
+		return fmt.Errorf("could not load configuration: %v", err)
 	}
 	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
 	server := &http.Server{
