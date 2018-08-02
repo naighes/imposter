@@ -21,7 +21,7 @@ func newFileFunction(args []Expression) (Expression, error) {
 func (f fileFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.path.Evaluate(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	b, ok := a.(string)
 	if !ok {
@@ -37,7 +37,7 @@ func (f fileFunction) Evaluate(vars map[string]interface{}, req *http.Request) (
 func (f fileFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.path.Test(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	_, ok := a.(string)
 	if !ok {

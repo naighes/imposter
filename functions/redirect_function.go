@@ -22,7 +22,7 @@ func newRedirectFunction(args []Expression) (Expression, error) {
 func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.url.Evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	b, ok := a.(string)
 	if !ok {
@@ -30,7 +30,7 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 	}
 	c, err := f.statusCode.Evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	statusCode, ok := c.(int)
 	if !ok {
@@ -52,7 +52,7 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 func (f redirectFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.url.Test(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	b, ok := a.(string)
 	if !ok {

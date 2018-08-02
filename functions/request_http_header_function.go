@@ -20,7 +20,7 @@ func newRequestHTTPHeaderFunction(args []Expression) (Expression, error) {
 func (f requestHTTPHeaderFunction) evaluate(g func(Expression) (interface{}, error), req *http.Request) (interface{}, error) {
 	a, err := g(f.name)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	b, ok := a.(string)
 	if !ok {

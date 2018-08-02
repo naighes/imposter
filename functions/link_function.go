@@ -22,7 +22,7 @@ func newLinkFunction(args []Expression) (Expression, error) {
 func (f linkFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.url.Evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	b, ok := a.(string)
 	if !ok {
@@ -48,7 +48,7 @@ func (f linkFunction) Evaluate(vars map[string]interface{}, req *http.Request) (
 func (f linkFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.url.Test(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	_, ok := a.(string)
 	if !ok {

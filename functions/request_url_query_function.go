@@ -26,7 +26,7 @@ func newRequestURLQueryFunction(args []Expression) (Expression, error) {
 func evaluateWithArgument(arg Expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	a, err := arg.Evaluate(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	b, ok := a.(string)
 	if !ok {
@@ -42,7 +42,7 @@ func evaluateWithArgument(arg Expression, vars map[string]interface{}, req *http
 func testWithArgument(arg Expression, vars map[string]interface{}, req *http.Request) (string, error) {
 	a, err := arg.Test(vars, req)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	b, ok := a.(string)
 	if !ok {

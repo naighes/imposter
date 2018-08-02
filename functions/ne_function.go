@@ -39,11 +39,11 @@ func (f neFunction) Test(vars map[string]interface{}, req *http.Request) (interf
 func (f neFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
 	a, err := g(f.left)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	b, err := g(f.right)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	return a != b, nil
 }

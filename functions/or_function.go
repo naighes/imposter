@@ -22,7 +22,7 @@ func (f orFunction) evaluate(g func(Expression) (interface{}, error)) (interface
 	for _, arg := range f.args {
 		a, err := g(arg)
 		if err != nil {
-			return false, fmt.Errorf("%v", err)
+			return false, err
 		}
 		b, ok := a.(bool)
 		if !ok {

@@ -22,7 +22,7 @@ func newRegexMatchFunction(args []Expression) (Expression, error) {
 func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.source.Evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var ok bool
 	var left string
@@ -31,7 +31,7 @@ func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Requ
 	}
 	b, err := f.pattern.Evaluate(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var right string
 	if right, ok = b.(string); !ok {
@@ -47,7 +47,7 @@ func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Requ
 func (f regexMatchFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	a, err := f.source.Test(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var ok bool
 	var left string
@@ -56,7 +56,7 @@ func (f regexMatchFunction) Test(vars map[string]interface{}, req *http.Request)
 	}
 	b, err := f.pattern.Test(vars, req)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var right string
 	if right, ok = b.(string); !ok {

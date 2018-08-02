@@ -22,7 +22,7 @@ func newContainsFunction(args []Expression) (Expression, error) {
 func (f containsFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
 	a, err := g(f.source)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var ok bool
 	var left string
@@ -31,7 +31,7 @@ func (f containsFunction) evaluate(g func(Expression) (interface{}, error)) (int
 	}
 	b, err := g(f.value)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var right string
 	if right, ok = b.(string); !ok {

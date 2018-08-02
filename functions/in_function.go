@@ -21,7 +21,7 @@ func newInFunction(args []Expression) (Expression, error) {
 func (f inFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
 	a, err := g(f.source)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	var ok bool
 	var left []interface{}
@@ -30,7 +30,7 @@ func (f inFunction) evaluate(g func(Expression) (interface{}, error)) (interface
 	}
 	b, err := g(f.item)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	for _, el := range left {
 		if el == b {

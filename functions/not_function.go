@@ -20,7 +20,7 @@ func newNotFunction(args []Expression) (Expression, error) {
 func (f notFunction) evaluate(g func(Expression) (interface{}, error)) (interface{}, error) {
 	a, err := g(f.arg)
 	if err != nil {
-		return false, fmt.Errorf("%v", err)
+		return false, err
 	}
 	b, ok := a.(bool)
 	if !ok {

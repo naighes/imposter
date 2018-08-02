@@ -20,7 +20,7 @@ func newVarFunction(args []Expression) (Expression, error) {
 func (f varFunction) evaluate(g func(Expression) (interface{}, error), vars map[string]interface{}) (interface{}, error) {
 	a, err := g(f.name)
 	if err != nil {
-		return "", fmt.Errorf("%v", err)
+		return "", err
 	}
 	b, ok := a.(string)
 	if !ok {

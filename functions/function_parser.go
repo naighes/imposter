@@ -105,7 +105,7 @@ func (e ArrayIdentity) evaluate(f func(Expression) (interface{}, error)) (interf
 	for index, element := range e.Elements {
 		a, err := f(element)
 		if err != nil {
-			return nil, fmt.Errorf("%v", err)
+			return nil, err
 		}
 		if index > 0 && t != reflect.TypeOf(a) {
 			return nil, fmt.Errorf("evaluation error: mixed type arrays are not allowed")
@@ -163,6 +163,8 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 		b = newRegexMatchFunction
 	case "in":
 		b = newInFunction
+	case "to_string":
+		b = newToStringFunction
 	default:
 		return nil, fmt.Errorf("could not find a built-in function with name '%s'", name)
 	}
@@ -196,7 +198,7 @@ func (e Function) Test(vars map[string]interface{}, req *http.Request) (interfac
 func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	guard, err := e.Guard.Evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	guardValue, ok := guard.(bool)
 	if !ok {
@@ -210,7 +212,7 @@ func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interf
 	}
 	val, err := exp.Evaluate(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	return val, nil
 }
@@ -218,7 +220,7 @@ func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interf
 func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
 	guard, err := e.Guard.Test(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	_, ok := guard.(bool)
 	if !ok {
@@ -226,11 +228,11 @@ func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{
 	}
 	left, err := e.Left.Test(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	right, err := e.Right.Test(vars, req)
 	if err != nil {
-		return nil, fmt.Errorf("%v", err)
+		return nil, err
 	}
 	a := reflect.TypeOf(left)
 	b := reflect.TypeOf(right)
