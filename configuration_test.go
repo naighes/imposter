@@ -56,3 +56,15 @@ func TestHeaderExpressionSyntaxError(t *testing.T) {
 		return
 	}
 }
+
+func TestStatusCodeTypeMismatch(t *testing.T) {
+	rsp := MatchRsp{StatusCode: `${"200"}`}
+	def := &MatchDef{RuleExpression: `${true}`, Response: &rsp}
+	vars := make(map[string]interface{})
+	errors := def.validate(functions.ParseExpression, vars)
+	const expected = 1
+	if l := len(errors); l != expected {
+		t.Errorf("expected %d error(s); got %d instead", expected, l)
+		return
+	}
+}

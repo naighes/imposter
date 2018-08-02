@@ -104,7 +104,25 @@ func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]
 			}
 		}
 	}
+	err = validateStatusCode(rsp.StatusCode, vars)
+	if err != nil {
+		r = append(r, fmt.Sprintf("%v", err))
+	}
 	return r
+}
+
+func validateStatusCode(expression string, vars map[string]interface{}) error {
+	if expression == "" {
+		return nil
+	}
+	a, err := validateEvaluation(expression, vars)
+	if err != nil {
+		return err
+	}
+	if _, ok := a.(int); !ok {
+		return fmt.Errorf("expected an 'int' value for status code; got '%v' instead", reflect.TypeOf(a))
+	}
+	return nil
 }
 
 func validateRuleExpression(expression string, vars map[string]interface{}) error {
