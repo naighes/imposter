@@ -23,6 +23,7 @@ func startCmd() command {
 	fs.StringVar(&opts.rawTLSCertFileList, "tls-cert-file-list", "", "A comma separated list of X.509 certificates to secure communication")
 	fs.StringVar(&opts.rawTLSKeyFileList, "tls-key-file-list", "", "A comma separated list of private key files corresponding to the X.509 certificates")
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
+	fs.BoolVar(&opts.record, "record", false, "Enable the recording of PUT requests")
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
 		return startExec(&opts)
@@ -35,6 +36,7 @@ type startOpts struct {
 	wait               time.Duration
 	rawTLSCertFileList string
 	rawTLSKeyFileList  string
+	record             bool
 }
 
 func (o *startOpts) buildListenAndServe(server *http.Server) (func() error, error) {
@@ -71,7 +73,13 @@ func startExec(opts *startOpts) error {
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
-	router, err := NewRouter(config)
+	var store Store
+	if opts.record {
+		store = newInMemoryStore()
+	} else {
+		store = nil
+	}
+	router, err := NewRouter(config, store)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}

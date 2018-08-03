@@ -13,6 +13,7 @@ import (
 type Router struct {
 	routes []*route
 	vars   map[string]interface{}
+	store  Store
 }
 
 type route struct {
@@ -21,10 +22,21 @@ type route struct {
 	handler    http.Handler
 }
 
-func (handler *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	for _, route := range handler.routes {
+func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if router.store != nil {
+		switch r.Method {
+		case "PUT":
+			router.store.ServeWrite(w, r)
+			return
+		case "GET", "HEAD":
+			if ok := router.store.ServeRead(w, r); ok {
+				return
+			}
+		}
+	}
+	for _, route := range router.routes {
 		// TODO: X-Forwarded-Host?
-		ctx := &functions.EvaluationContext{Vars: handler.vars, Req: r}
+		ctx := &functions.EvaluationContext{Vars: router.vars, Req: r}
 		a, err := route.expression.Evaluate(ctx)
 		if err != nil {
 			writeError(w, err)
@@ -51,7 +63,7 @@ func (handler *Router) add(expression functions.Expression, latency time.Duratio
 	handler.routes = append(handler.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
-func NewRouter(config *Config) (*Router, error) {
+func NewRouter(config *Config, store Store) (*Router, error) {
 	defs := config.Defs
 	var options *ConfigOptions
 	if config.Options == nil {
@@ -67,6 +79,7 @@ func NewRouter(config *Config) (*Router, error) {
 	}
 	r := Router{}
 	r.vars = vars
+	r.store = store
 	for _, def := range defs {
 		rule, err := functions.ParseExpression(def.RuleExpression)
 		if err != nil {

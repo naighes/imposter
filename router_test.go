@@ -10,7 +10,7 @@ import (
 func TestEmptyRuleSet(t *testing.T) {
 	config := Config{}
 	r := httptest.NewRecorder()
-	routes, err := NewRouter(&config)
+	routes, err := NewRouter(&config, nil)
 	if err != nil {
 		t.Errorf("cannot create a new instance of NewRouter")
 	}
@@ -30,7 +30,7 @@ func TestMatchingRule(t *testing.T) {
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}
 	r := httptest.NewRecorder()
-	routes, err := NewRouter(&config)
+	routes, err := NewRouter(&config, nil)
 	if err != nil {
 		t.Errorf("cannot create a new instance of NewRouter: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestNonMatchingRule(t *testing.T) {
 	defs := []*MatchDef{&def}
 	config := Config{Defs: defs}
 	r := httptest.NewRecorder()
-	routes, err := NewRouter(&config)
+	routes, err := NewRouter(&config, nil)
 	if err != nil {
 		t.Errorf("cannot create a new instance of NewRouter")
 	}
