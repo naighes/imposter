@@ -23,11 +23,12 @@ Run a new instance of **imPOSTer**.
  * `-port <int>`: the listening TCP port (default 8080)
  * `-tls-cert-file-list <string>`: a comma separated list of x.509 certificates to secure communication
  * `-tls-key-file-list <string>`: a comma separated list of private key files corresponding to the x.509 certificates listed in `-tls-cert-file-list <string>`
+ * `-record <string>`: Enable the recording of PUT requests (select multiple values from {`scheme`, `host`, `path`, `query`} separated by pipe (`|`))
 
 ### Example
 
 ```sh
-$ ./imposter start --config-file ./config.yaml --port 3000
+$ ./imposter start --config-file ./config.yaml --port 3000 --record "scheme|host|path"
 ```
 
 ---
@@ -212,6 +213,75 @@ pattern_list:
     }
   status_code: ${200}
 ```
+
+## Recording
+
+**imPOSTer** can be configured to dynamically define rules at runtime.
+Once you issue an HTTP request by the HTTP `PUT` method, a copy of the original payload will be internally stored. You'll be able to subsequently retrieve the previously defined payload by requesting the same URL with the HTTP `GET` method.
+Recording needs to be explicitly enabled by the `record` flag (see the documentation above) and its value defines how incoming URLs will be matched.
+
+### Example
+
+Let's start **imPOSTer** by enabling recording:
+
+```sh
+$ ./imposter start --config-file ./config.yaml --record "scheme|host|path|query"
+```
+
+Send then an HTTP `PUT` request:
+
+```sh
+$ curl -il \
+    -X PUT \
+    -d "Hello, PUT!" \
+    -H "Content-Type: text/plain" \
+    "http://localhost:8080/naighes/imposter/pulls/2"
+
+HTTP/1.1 202 Accepted
+Date: Fri, 03 Aug 2018 18:37:47 GMT
+Content-Length: 0
+```
+
+You can now retrieve the above resource as well:
+
+```sh
+$ curl -il \
+    -X GET \
+    "http://localhost:8080/naighes/imposter/pulls/2"
+
+HTTP/1.1 200 OK
+Content-Type: text/plain
+Date: Fri, 03 Aug 2018 20:37:47 GMT
+Last-Modified: Fri, 03 Aug 2018 20:37:47 GMT
+Content-Length: 10
+
+Hello, PUT!
+```
+
+Pretty good, isn't it?
+Now we're gonna do the same as above, but by adding a query parameter to the URL:
+
+```sh
+$ curl -il \
+    -X GET \
+    "http://localhost:8080/naighes/imposter/pulls/2?key=value"
+
+HTTP/1.1 404 Not Found
+Content-Type: text/plain; charset=utf-8
+X-Content-Type-Options: nosniff
+Date: Fri, 03 Aug 2018 18:42:43 GMT
+Content-Length: 19
+
+404 page not found
+```
+
+This time we get a 404 status code (the default one, unless any other `rule_expression` was matched). This is happening due to the strict matching requirement we imposed by running the server with `--record "scheme|host|path|query"`. We can avoid this behaviour by ignoring the query parameter:
+
+```sh
+$ ./imposter start --config-file ./config.yaml --record "scheme|host|path"
+```
+
+**Note:** recording takes precedence over any `rule_expression`.
 
 ## License
 
