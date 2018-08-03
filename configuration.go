@@ -154,7 +154,8 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	if err != nil {
 		return nil, err
 	}
-	a, err := e.Test(vars, &http.Request{Header: http.Header{}})
+	ctx := &functions.EvaluationContext{Vars: vars, Req: &http.Request{Header: http.Header{}}}
+	a, err := e.Test(ctx)
 	if err != nil {
 		return nil, err
 	}

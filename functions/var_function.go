@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"net/http"
 )
 
 type varFunction struct {
@@ -32,20 +31,20 @@ func (f varFunction) evaluate(g func(Expression) (interface{}, error), vars map[
 	return "", fmt.Errorf("evaluation error: cannot find a variable named '%s'", b)
 }
 
-func (f varFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f varFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Evaluate(vars, req)
+			return expression.Evaluate(ctx)
 		}
-	}(vars, req)
-	return f.evaluate(g, vars)
+	}(ctx)
+	return f.evaluate(g, ctx.Vars)
 }
 
-func (f varFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f varFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Test(vars, req)
+			return expression.Test(ctx)
 		}
-	}(vars, req)
-	return f.evaluate(g, vars)
+	}(ctx)
+	return f.evaluate(g, ctx.Vars)
 }

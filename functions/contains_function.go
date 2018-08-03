@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 )
 
@@ -40,20 +39,20 @@ func (f containsFunction) evaluate(g func(Expression) (interface{}, error)) (int
 	return strings.Index(left, right) != -1, nil
 }
 
-func (f containsFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f containsFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Evaluate(vars, req)
+			return expression.Evaluate(ctx)
 		}
-	}(vars, req)
+	}(ctx)
 	return f.evaluate(g)
 }
 
-func (f containsFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f containsFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Test(vars, req)
+			return expression.Test(ctx)
 		}
-	}(vars, req)
+	}(ctx)
 	return f.evaluate(g)
 }

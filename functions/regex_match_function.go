@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
 )
 
@@ -19,8 +18,8 @@ func newRegexMatchFunction(args []Expression) (Expression, error) {
 	return r, nil
 }
 
-func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.source.Evaluate(vars, req)
+func (f regexMatchFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.source.Evaluate(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -29,7 +28,7 @@ func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Requ
 	if left, ok = a.(string); !ok {
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	b, err := f.pattern.Evaluate(vars, req)
+	b, err := f.pattern.Evaluate(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -44,8 +43,8 @@ func (f regexMatchFunction) Evaluate(vars map[string]interface{}, req *http.Requ
 	return reg.MatchString(left), nil
 }
 
-func (f regexMatchFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.source.Test(vars, req)
+func (f regexMatchFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.source.Test(ctx)
 	if err != nil {
 		return false, err
 	}
@@ -54,7 +53,7 @@ func (f regexMatchFunction) Test(vars map[string]interface{}, req *http.Request)
 	if left, ok = a.(string); !ok {
 		return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	b, err := f.pattern.Test(vars, req)
+	b, err := f.pattern.Test(ctx)
 	if err != nil {
 		return false, err
 	}

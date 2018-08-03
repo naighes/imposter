@@ -185,7 +185,7 @@ The supported built-in functions are:
  * `link(url: string) -> HTTPRsp` - Forwards a client to a new URL.
  * `redirect(url: string, status_code: int) -> HTTPRsp` - Redirects a client to a new URL with the specified `status_code` (it must be a 3XX value).
  * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element within the `source` array  object.
- * `to_string(oby: any) -> string` - Returns a string that represents the current object.
+ * `to_string(obj: any) -> string` - Returns a string that represents `obj`.
 
 #### Conditional statements
 A conditional statement identifies which statement to run based on the value of a boolean expression.  

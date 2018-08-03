@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"net/http"
 )
 
 type requestHTTPHostFunction struct {
@@ -16,10 +15,10 @@ func newRequestHTTPHostFunction(args []Expression) (Expression, error) {
 	return r, nil
 }
 
-func (f requestHTTPHostFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return req.Host, nil
+func (f requestHTTPHostFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	return ctx.Req.Host, nil
 }
 
-func (f requestHTTPHostFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return f.Evaluate(vars, req)
+func (f requestHTTPHostFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	return f.Evaluate(ctx)
 }

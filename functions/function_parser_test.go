@@ -62,7 +62,8 @@ func TestBoolIdentity(t *testing.T) {
 		t.Errorf("expected type '*BoolIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := b.Evaluate(ctx)
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -90,7 +91,8 @@ func TestArrayIdentity(t *testing.T) {
 		t.Errorf("expected type '*ArrayIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := f.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := f.Evaluate(ctx)
 	if err != nil {
 		t.Errorf("evaluation error: %v", err)
 		return
@@ -118,7 +120,8 @@ func TestMixedTypeArrayIdentity(t *testing.T) {
 		t.Errorf("expected type '*ArrayIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	_, err = f.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	_, err = f.Evaluate(ctx)
 	if err == nil {
 		t.Errorf("expected error")
 		return
@@ -137,7 +140,8 @@ func TestOrEvaluation(t *testing.T) {
 		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := b.Evaluate(ctx)
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -167,7 +171,8 @@ func TestAndEvaluation(t *testing.T) {
 		t.Errorf("expected type '*Function'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := b.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := b.Evaluate(ctx)
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -209,7 +214,8 @@ func TestEmptyString(t *testing.T) {
 		t.Errorf("expected type '*StringIdentity'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	s, err := si.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	s, err := si.Evaluate(ctx)
 	if err != nil {
 		t.Errorf("evaluation error")
 		return
@@ -344,7 +350,8 @@ func TestEvaluateVar(t *testing.T) {
 	vars := map[string]interface{}{
 		"a": expected,
 	}
-	e, err := token.Evaluate(vars, &http.Request{})
+	ctx := &EvaluationContext{Vars: vars, Req: &http.Request{}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -395,7 +402,8 @@ func TestComplexIfElseStatement(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -429,7 +437,8 @@ func TestIfElseStatement(t *testing.T) {
 		t.Errorf("expected type '*IfElse'; got '%s'", reflect.TypeOf(token))
 		return
 	}
-	e, err := f.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := f.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -456,7 +465,8 @@ func TestEvaluateHTTPHeader(t *testing.T) {
 	headers := http.Header{
 		"Content-Type": []string{expected},
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Header: headers})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{Header: headers}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -475,7 +485,8 @@ func TestRequestURL(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{URL: expected})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{URL: expected}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -494,7 +505,8 @@ func TestRegexMatch(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -522,7 +534,8 @@ func TestQuery(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{URL: u})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{URL: u}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -549,7 +562,8 @@ func TestHTTPMethod(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Method: expected})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{Method: expected}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -578,7 +592,8 @@ func TestRequestHost(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{Host: expected})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{Host: expected}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -606,7 +621,8 @@ func TestArrayInTrue(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return
@@ -634,7 +650,8 @@ func TestArrayInFalse(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	e, err := token.Evaluate(make(map[string]interface{}), &http.Request{})
+	ctx := &EvaluationContext{Vars: make(map[string]interface{}), Req: &http.Request{}}
+	e, err := token.Evaluate(ctx)
 	if err != nil {
 		t.Error(err)
 		return

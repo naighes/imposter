@@ -24,7 +24,8 @@ func (h FuncHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		a, err := e.Evaluate(vars, r)
+		ctx := &functions.EvaluationContext{Vars: vars, Req: r}
+		a, err := e.Evaluate(ctx)
 		if err != nil {
 			writeError(w, err)
 			return
@@ -67,18 +68,19 @@ func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(
 	}
 	vars := h.Vars
 	return func(w http.ResponseWriter, r *http.Request) {
-		b, err := e1.Evaluate(vars, r)
+		ctx := &functions.EvaluationContext{Vars: vars, Req: r}
+		b, err := e1.Evaluate(ctx)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
-		statusCode, err := evaluateStatusCode(e2, vars, r)
+		statusCode, err := evaluateStatusCode(e2, ctx)
 		if err != nil {
 			writeError(w, err)
 			return
 		}
 		for k, v := range headers {
-			v1, err := v.Evaluate(vars, r)
+			v1, err := v.Evaluate(ctx)
 			if err != nil {
 				writeError(w, err)
 				return
@@ -90,8 +92,8 @@ func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(
 	}, nil
 }
 
-func evaluateStatusCode(e functions.Expression, vars map[string]interface{}, r *http.Request) (int, error) {
-	s, err := e.Evaluate(vars, r)
+func evaluateStatusCode(e functions.Expression, ctx *functions.EvaluationContext) (int, error) {
+	s, err := e.Evaluate(ctx)
 	if err != nil {
 		return 0, err
 	}

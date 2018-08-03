@@ -2,7 +2,6 @@ package functions
 
 import (
 	"fmt"
-	"net/http"
 )
 
 type requestURLQueryFunction struct {
@@ -23,8 +22,8 @@ func newRequestURLQueryFunction(args []Expression) (Expression, error) {
 	}
 }
 
-func evaluateWithArgument(arg Expression, vars map[string]interface{}, req *http.Request) (string, error) {
-	a, err := arg.Evaluate(vars, req)
+func evaluateWithArgument(arg Expression, ctx *EvaluationContext) (string, error) {
+	a, err := arg.Evaluate(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -32,15 +31,15 @@ func evaluateWithArgument(arg Expression, vars map[string]interface{}, req *http
 	if !ok {
 		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	if req.URL == nil {
+	if ctx.Req.URL == nil {
 		return "", nil
 	}
-	return req.URL.Query().Get(b), nil
+	return ctx.Req.URL.Query().Get(b), nil
 }
 
 // TODO: remove duplication
-func testWithArgument(arg Expression, vars map[string]interface{}, req *http.Request) (string, error) {
-	a, err := arg.Test(vars, req)
+func testWithArgument(arg Expression, ctx *EvaluationContext) (string, error) {
+	a, err := arg.Test(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -48,29 +47,29 @@ func testWithArgument(arg Expression, vars map[string]interface{}, req *http.Req
 	if !ok {
 		return "", fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	if req.URL == nil {
+	if ctx.Req.URL == nil {
 		return "", nil
 	}
-	return req.URL.Query().Get(b), nil
+	return ctx.Req.URL.Query().Get(b), nil
 }
 
-func evaluateWithoutArgument(vars map[string]interface{}, req *http.Request) (string, error) {
-	if req.URL == nil {
+func evaluateWithoutArgument(ctx *EvaluationContext) (string, error) {
+	if ctx.Req.URL == nil {
 		return "", nil
 	}
-	return req.URL.RawQuery, nil
+	return ctx.Req.URL.RawQuery, nil
 }
 
-func (f requestURLQueryFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (f requestURLQueryFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	if f.arg == nil {
-		return evaluateWithoutArgument(vars, req)
+		return evaluateWithoutArgument(ctx)
 	}
-	return evaluateWithArgument(f.arg, vars, req)
+	return evaluateWithArgument(f.arg, ctx)
 }
 
-func (f requestURLQueryFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (f requestURLQueryFunction) Test(ctx *EvaluationContext) (interface{}, error) {
 	if f.arg == nil {
-		return evaluateWithoutArgument(vars, req)
+		return evaluateWithoutArgument(ctx)
 	}
-	return testWithArgument(f.arg, vars, req)
+	return testWithArgument(f.arg, ctx)
 }

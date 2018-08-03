@@ -9,13 +9,19 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	//"github.com/golang-collections/collections/stack"
 )
+
+type EvaluationContext struct {
+	Vars map[string]interface{}
+	Req  *http.Request
+}
 
 type ExpressionParser = func(string) (Expression, error)
 
 type Expression interface {
-	Evaluate(map[string]interface{}, *http.Request) (interface{}, error)
-	Test(map[string]interface{}, *http.Request) (interface{}, error)
+	Evaluate(*EvaluationContext) (interface{}, error)
+	Test(*EvaluationContext) (interface{}, error)
 }
 
 type IfElse struct {
@@ -49,53 +55,53 @@ type ArrayIdentity struct {
 	Elements []Expression
 }
 
-func (e StringIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e StringIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return e.Value, nil
 }
 
-func (e StringIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return e.Evaluate(vars, req)
+func (e StringIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+	return e.Evaluate(ctx)
 }
 
-func (e IntegerIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e IntegerIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return strconv.Atoi(e.Value)
 }
 
-func (e IntegerIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return e.Evaluate(vars, req)
+func (e IntegerIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+	return e.Evaluate(ctx)
 }
 
-func (e FloatIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e FloatIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return strconv.ParseFloat(e.Value, 64)
 }
 
-func (e FloatIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return e.Evaluate(vars, req)
+func (e FloatIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+	return e.Evaluate(ctx)
 }
 
-func (e BoolIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e BoolIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return strconv.ParseBool(e.Value)
 }
 
-func (e BoolIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	return e.Evaluate(vars, req)
+func (e BoolIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+	return e.Evaluate(ctx)
 }
 
-func (e ArrayIdentity) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	f := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (e ArrayIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	f := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Evaluate(vars, req)
+			return expression.Evaluate(ctx)
 		}
-	}(vars, req)
+	}(ctx)
 	return e.evaluate(f)
 }
 
-func (e ArrayIdentity) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	f := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (e ArrayIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+	f := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Test(vars, req)
+			return expression.Test(ctx)
 		}
-	}(vars, req)
+	}(ctx)
 	return e.evaluate(f)
 }
 
@@ -122,7 +128,7 @@ func (e ArrayIdentity) evaluate(f func(Expression) (interface{}, error)) (interf
 	return r, nil
 }
 
-type Evaluate func(vars map[string]interface{}, req *http.Request) (interface{}, error)
+type Evaluate func(*EvaluationContext) (interface{}, error)
 
 func getEvaluationFunc(name string) (func(args []Expression) (Expression, error), error) {
 	var b func(args []Expression) (Expression, error)
@@ -171,32 +177,32 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 	return b, nil
 }
 
-func (e Function) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e Function) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	b, err := getEvaluationFunc(e.Name)
 	if err != nil {
 		return nil, err
 	}
 	f, err := b(e.Args)
 	if err == nil {
-		return f.Evaluate(vars, req)
+		return f.Evaluate(ctx)
 	}
 	return nil, err
 }
 
-func (e Function) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
+func (e Function) Test(ctx *EvaluationContext) (interface{}, error) {
 	b, err := getEvaluationFunc(e.Name)
 	if err != nil {
 		return nil, err
 	}
 	f, err := b(e.Args)
 	if err == nil {
-		return f.Test(vars, req)
+		return f.Test(ctx)
 	}
 	return nil, err
 }
 
-func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	guard, err := e.Guard.Evaluate(vars, req)
+func (e IfElse) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	guard, err := e.Guard.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -210,15 +216,15 @@ func (e IfElse) Evaluate(vars map[string]interface{}, req *http.Request) (interf
 	} else {
 		exp = e.Right
 	}
-	val, err := exp.Evaluate(vars, req)
+	val, err := exp.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return val, nil
 }
 
-func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	guard, err := e.Guard.Test(vars, req)
+func (e IfElse) Test(ctx *EvaluationContext) (interface{}, error) {
+	guard, err := e.Guard.Test(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -226,11 +232,11 @@ func (e IfElse) Test(vars map[string]interface{}, req *http.Request) (interface{
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", guard)
 	}
-	left, err := e.Left.Test(vars, req)
+	left, err := e.Left.Test(ctx)
 	if err != nil {
 		return nil, err
 	}
-	right, err := e.Right.Test(vars, req)
+	right, err := e.Right.Test(ctx)
 	if err != nil {
 		return nil, err
 	}

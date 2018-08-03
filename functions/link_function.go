@@ -19,8 +19,8 @@ func newLinkFunction(args []Expression) (Expression, error) {
 	return r, nil
 }
 
-func (f linkFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.url.Evaluate(vars, req)
+func (f linkFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.url.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +45,8 @@ func (f linkFunction) Evaluate(vars map[string]interface{}, req *http.Request) (
 	return r, nil
 }
 
-func (f linkFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.url.Test(vars, req)
+func (f linkFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.url.Test(ctx)
 	if err != nil {
 		return nil, err
 	}

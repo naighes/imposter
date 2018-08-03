@@ -3,7 +3,6 @@ package functions
 import (
 	"fmt"
 	"io/ioutil"
-	"net/http"
 )
 
 type fileFunction struct {
@@ -18,8 +17,8 @@ func newFileFunction(args []Expression) (Expression, error) {
 	return r, nil
 }
 
-func (f fileFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.path.Evaluate(vars, req)
+func (f fileFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.path.Evaluate(ctx)
 	if err != nil {
 		return "", err
 	}
@@ -34,8 +33,8 @@ func (f fileFunction) Evaluate(vars map[string]interface{}, req *http.Request) (
 	return string(content), nil
 }
 
-func (f fileFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.path.Test(vars, req)
+func (f fileFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.path.Test(ctx)
 	if err != nil {
 		return "", err
 	}

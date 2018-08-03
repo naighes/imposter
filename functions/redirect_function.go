@@ -19,8 +19,8 @@ func newRedirectFunction(args []Expression) (Expression, error) {
 	return r, nil
 }
 
-func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.url.Evaluate(vars, req)
+func (f redirectFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.url.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +28,7 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
 	}
-	c, err := f.statusCode.Evaluate(vars, req)
+	c, err := f.statusCode.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +49,8 @@ func (f redirectFunction) Evaluate(vars map[string]interface{}, req *http.Reques
 	return r, nil
 }
 
-func (f redirectFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	a, err := f.url.Test(vars, req)
+func (f redirectFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	a, err := f.url.Test(ctx)
 	if err != nil {
 		return nil, err
 	}

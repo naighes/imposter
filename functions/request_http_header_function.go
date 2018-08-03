@@ -33,20 +33,20 @@ func (f requestHTTPHeaderFunction) evaluate(g func(Expression) (interface{}, err
 	}
 }
 
-func (f requestHTTPHeaderFunction) Evaluate(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f requestHTTPHeaderFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Evaluate(vars, req)
+			return expression.Evaluate(ctx)
 		}
-	}(vars, req)
-	return f.evaluate(g, req)
+	}(ctx)
+	return f.evaluate(g, ctx.Req)
 }
 
-func (f requestHTTPHeaderFunction) Test(vars map[string]interface{}, req *http.Request) (interface{}, error) {
-	g := func(vars map[string]interface{}, req *http.Request) func(Expression) (interface{}, error) {
+func (f requestHTTPHeaderFunction) Test(ctx *EvaluationContext) (interface{}, error) {
+	g := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
-			return expression.Test(vars, req)
+			return expression.Test(ctx)
 		}
-	}(vars, req)
-	return f.evaluate(g, req)
+	}(ctx)
+	return f.evaluate(g, ctx.Req)
 }

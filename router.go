@@ -24,7 +24,8 @@ type route struct {
 func (handler *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, route := range handler.routes {
 		// TODO: X-Forwarded-Host?
-		a, err := route.expression.Evaluate(handler.vars, r)
+		ctx := &functions.EvaluationContext{Vars: handler.vars, Req: r}
+		a, err := route.expression.Evaluate(ctx)
 		if err != nil {
 			writeError(w, err)
 			return
