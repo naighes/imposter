@@ -23,12 +23,21 @@ func startCmd() command {
 	fs.StringVar(&opts.rawTLSCertFileList, "tls-cert-file-list", "", "A comma separated list of X.509 certificates to secure communication")
 	fs.StringVar(&opts.rawTLSKeyFileList, "tls-key-file-list", "", "A comma separated list of private key files corresponding to the X.509 certificates")
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
-	fs.BoolVar(&opts.record, "record", false, "Enable the recording of PUT requests")
+	fs.StringVar(&opts.record, "record", "", "Enable the recording of PUT requests")
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
 		return startExec(&opts)
 	}}
 }
+
+type RecordType int
+
+const (
+	Scheme RecordType = 1 << iota
+	Host
+	Path
+	Query
+)
 
 type startOpts struct {
 	port               int
@@ -36,19 +45,38 @@ type startOpts struct {
 	wait               time.Duration
 	rawTLSCertFileList string
 	rawTLSKeyFileList  string
-	record             bool
+	record             string
 }
 
-func (o *startOpts) buildListenAndServe(server *http.Server) (func() error, error) {
-	if o.rawTLSCertFileList != "" && o.rawTLSKeyFileList != "" {
-		certs := strings.Split(o.rawTLSCertFileList, ",")
-		keys := strings.Split(o.rawTLSKeyFileList, ",")
+func (s *startOpts) recordConfig() (RecordType, error) {
+	m := map[string]RecordType{
+		"scheme": Scheme,
+		"host":   Host,
+		"path":   Path,
+		"query":  Query,
+	}
+	var r RecordType
+	e := strings.Split(s.record, "|")
+	for _, v := range e {
+		rt, ok := m[v]
+		if !ok {
+			return 0, fmt.Errorf("'%s' is not a valid flag: select multiple values from {'scheme', 'host', 'path', 'query'} separated by pipe (|)", v)
+		}
+		r = r | rt
+	}
+	return r, nil
+}
+
+func (s *startOpts) buildListenAndServe(server *http.Server) (func() error, error) {
+	if s.rawTLSCertFileList != "" && s.rawTLSKeyFileList != "" {
+		certs := strings.Split(s.rawTLSCertFileList, ",")
+		keys := strings.Split(s.rawTLSKeyFileList, ",")
 		if len(certs) != len(keys) {
 			return nil, fmt.Errorf("the number of X.509 certificates does not match the number of keys")
 		}
 		if len(certs) == 1 {
 			return func() error {
-				return server.ListenAndServeTLS(o.rawTLSCertFileList, o.rawTLSKeyFileList)
+				return server.ListenAndServeTLS(s.rawTLSCertFileList, s.rawTLSKeyFileList)
 			}, nil
 		}
 		cfg := &tls.Config{}
@@ -74,8 +102,12 @@ func startExec(opts *startOpts) error {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
 	var store Store
-	if opts.record {
-		store = newInMemoryStore()
+	rt, err := opts.recordConfig()
+	if err != nil {
+		return err
+	}
+	if rt != 0 {
+		store = newInMemoryStore(rt)
 	} else {
 		store = nil
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -19,13 +20,32 @@ type Store interface {
 
 type inMemoryStore struct {
 	entries map[string]*functions.HTTPRsp
-	lock    sync.RWMutex
+	lock    *sync.RWMutex
+	rt      RecordType
 }
 
-func newInMemoryStore() Store {
+func newInMemoryStore(rt RecordType) Store {
 	lock := sync.RWMutex{}
 	entries := make(map[string]*functions.HTTPRsp)
-	return &inMemoryStore{entries, lock}
+	return &inMemoryStore{entries, &lock, rt}
+}
+
+func (s *inMemoryStore) getKey(r *http.Request) string {
+	u := r.URL
+	var b bytes.Buffer
+	if s.rt&Scheme == Scheme && u.Scheme != "" {
+		b.WriteString(fmt.Sprintf("%s://", u.Scheme))
+	}
+	if s.rt&Host == Host {
+		b.WriteString(u.Host)
+	}
+	if s.rt&Path == Path {
+		b.WriteString(u.Path)
+	}
+	if s.rt&Query == Query && u.RawQuery != "" {
+		b.WriteString(fmt.Sprintf("?%s", u.RawQuery))
+	}
+	return b.String()
 }
 
 func (s *inMemoryStore) Add(url string, rsp *functions.HTTPRsp) bool {
@@ -55,6 +75,7 @@ func (s *inMemoryStore) ServeWrite(w http.ResponseWriter, r *http.Request) {
 			writeError(w, err)
 			return
 		}
+		defer r.Body.Close()
 		body = string(b)
 	}
 	now := time.Now().Format(http.TimeFormat)
@@ -62,7 +83,7 @@ func (s *inMemoryStore) ServeWrite(w http.ResponseWriter, r *http.Request) {
 	headers.Set("Last-Modified", now)
 	headers.Set("Date", now)
 	headers.Set("Content-Type", r.Header.Get("Content-Type"))
-	created := s.Add(r.URL.String(), &functions.HTTPRsp{Body: body, Headers: headers})
+	created := s.Add(s.getKey(r), &functions.HTTPRsp{Body: body, Headers: headers})
 	if created {
 		w.WriteHeader(202)
 	} else {
@@ -71,7 +92,7 @@ func (s *inMemoryStore) ServeWrite(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *inMemoryStore) ServeRead(w http.ResponseWriter, r *http.Request) bool {
-	rsp := s.Get(r.URL.String())
+	rsp := s.Get(s.getKey(r))
 	if rsp == nil {
 		return false
 	}

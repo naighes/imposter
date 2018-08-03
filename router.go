@@ -59,8 +59,8 @@ func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (handler *Router) add(expression functions.Expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
-	handler.routes = append(handler.routes, &route{expression, latency, http.HandlerFunc(h)})
+func (router *Router) add(expression functions.Expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+	router.routes = append(router.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
 func NewRouter(config *Config, store Store) (*Router, error) {
