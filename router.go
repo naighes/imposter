@@ -14,6 +14,7 @@ type Router struct {
 	routes []*route
 	vars   map[string]interface{}
 	store  Store
+	next   http.Handler
 }
 
 type route struct {
@@ -23,6 +24,13 @@ type route struct {
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	router.serve(w, r)
+	if router.next != nil {
+		router.next.ServeHTTP(w, r)
+	}
+}
+
+func (router *Router) serve(w http.ResponseWriter, r *http.Request) {
 	if router.store != nil {
 		switch r.Method {
 		case "PUT":
@@ -65,12 +73,6 @@ func (router *Router) add(expression functions.Expression, latency time.Duration
 
 func NewRouter(config *Config, store Store) (*Router, error) {
 	defs := config.Defs
-	var options *ConfigOptions
-	if config.Options == nil {
-		options = &ConfigOptions{}
-	} else {
-		options = config.Options
-	}
 	var vars map[string]interface{}
 	if config.Vars == nil {
 		vars = make(map[string]interface{})
@@ -85,14 +87,14 @@ func NewRouter(config *Config, store Store) (*Router, error) {
 		if err != nil {
 			return nil, err
 		}
-		f, err := HandleFunc(def.Response, options, vars)
+		f, err := HandleFunc(def.Response, vars)
 		if err != nil {
 			return nil, err
 		}
 		if def.Latency < 0 {
 			return nil, fmt.Errorf("latency requires a value greater than zero")
 		}
-		r.add(rule, def.Latency, enrichHeaders(f, options))
+		r.add(rule, def.Latency, f)
 	}
 	return &r, nil
 }
@@ -103,7 +105,7 @@ func writeError(w http.ResponseWriter, err error) {
 	fmt.Fprintf(w, err.Error())
 }
 
-func HandleFunc(o interface{}, options *ConfigOptions, vars map[string]interface{}) (func(http.ResponseWriter, *http.Request), error) {
+func HandleFunc(o interface{}, vars map[string]interface{}) (func(http.ResponseWriter, *http.Request), error) {
 	var rsp MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
@@ -114,21 +116,4 @@ func HandleFunc(o interface{}, options *ConfigOptions, vars map[string]interface
 		return FuncHTTPHandler{Content: str, Vars: vars}.HandleFunc(functions.ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
-}
-
-func enrichHeaders(f func(http.ResponseWriter, *http.Request), options *ConfigOptions) func(http.ResponseWriter, *http.Request) {
-	o := options
-	return func(w http.ResponseWriter, r *http.Request) {
-		setCorsHeaders(w, o)
-		f(w, r)
-	}
-}
-
-func setCorsHeaders(w http.ResponseWriter, options *ConfigOptions) {
-	// NOTE: preflighted requests are not handled: we may came back on this in future
-	if options.Cors {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization")
-	}
 }

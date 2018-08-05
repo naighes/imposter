@@ -118,6 +118,8 @@ func startExec(opts *startOpts) error {
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
+	// TODO: check Options is not nil
+	router.next = &corsHandler{enabled: config.Options.Cors}
 	h := loggingHandler{logger: &defaultLogger{}, next: router}
 	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
 	server := &http.Server{

@@ -32,5 +32,7 @@ type loggingHandler struct {
 
 func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	h.logger.log(r)
-	h.next.ServeHTTP(w, r)
+	if h.next != nil {
+		h.next.ServeHTTP(w, r)
+	}
 }
