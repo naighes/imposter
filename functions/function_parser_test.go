@@ -456,7 +456,7 @@ func TestIfElseStatement(t *testing.T) {
 
 func TestEvaluateHTTPHeader(t *testing.T) {
 	const expected = "application/json"
-	str := `${http_header("Content-Type")}`
+	str := `${request_http_header("Content-Type")}`
 	token, err := ParseExpression(str)
 	if err != nil {
 		t.Error(err)

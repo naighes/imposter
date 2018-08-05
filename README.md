@@ -154,7 +154,7 @@ pattern_list:
         eq(request_http_method(), "GET")
       )
     }
-  response: ${redirect(var("imposter_link", 301))}
+  response: ${redirect(var("imposter_link"), 301)}
 vars:
   imposter_link: https://github.com/naighes/imposter
 ```

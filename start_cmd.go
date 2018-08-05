@@ -49,6 +49,9 @@ type startOpts struct {
 }
 
 func (s *startOpts) recordConfig() (RecordType, error) {
+	if s.record == "" {
+		return 0, nil
+	}
 	m := map[string]RecordType{
 		"scheme": Scheme,
 		"host":   Host,
@@ -97,6 +100,7 @@ func (s *startOpts) buildListenAndServe(server *http.Server) (func() error, erro
 }
 
 func startExec(opts *startOpts) error {
+	logger := &defaultLogger{}
 	config, err := readConfig(opts.configFile)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
@@ -111,7 +115,7 @@ func startExec(opts *startOpts) error {
 	} else {
 		store = nil
 	}
-	router, err := NewRouter(config, store)
+	router, err := NewRouter(config, store, logger)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}

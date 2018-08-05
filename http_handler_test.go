@@ -13,16 +13,16 @@ type fakeExpression struct {
 	rsp *functions.HTTPRsp
 }
 
-type errorExpression struct {
-	err string
-}
-
 func (e fakeExpression) Evaluate(ctx *functions.EvaluationContext) (interface{}, error) {
 	return e.rsp, nil
 }
 
 func (e fakeExpression) Test(ctx *functions.EvaluationContext) (interface{}, error) {
 	return e.rsp, nil
+}
+
+type errorExpression struct {
+	err string
 }
 
 func (e errorExpression) Evaluate(ctx *functions.EvaluationContext) (interface{}, error) {
