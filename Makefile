@@ -9,7 +9,7 @@ fmt:
 	@gofmt -w $(GOFMT_FILES)
 
 test: fmtcheck
-	@go test -timeout=60s -parallel=4
+	@go test ./... -timeout=60s -parallel=4
 
 bin: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/build.sh' --release"
