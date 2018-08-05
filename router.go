@@ -14,7 +14,6 @@ type Router struct {
 	routes []*route
 	vars   map[string]interface{}
 	store  Store
-	logger logger
 }
 
 type route struct {
@@ -24,7 +23,6 @@ type route struct {
 }
 
 func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	router.logger.log(r)
 	if router.store != nil {
 		switch r.Method {
 		case "PUT":
@@ -65,7 +63,7 @@ func (router *Router) add(expression functions.Expression, latency time.Duration
 	router.routes = append(router.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
-func NewRouter(config *Config, store Store, logger logger) (*Router, error) {
+func NewRouter(config *Config, store Store) (*Router, error) {
 	defs := config.Defs
 	var options *ConfigOptions
 	if config.Options == nil {
@@ -82,7 +80,6 @@ func NewRouter(config *Config, store Store, logger logger) (*Router, error) {
 	r := Router{}
 	r.vars = vars
 	r.store = store
-	r.logger = logger
 	for _, def := range defs {
 		rule, err := functions.ParseExpression(def.RuleExpression)
 		if err != nil {

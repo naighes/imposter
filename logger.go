@@ -24,3 +24,13 @@ func (l *defaultLogger) log(r *http.Request) {
 	}
 	log.Printf("\n%s %s %s\nHost: %s\n%s\n", r.Method, r.URL.String(), r.Proto, r.Host, b.String())
 }
+
+type loggingHandler struct {
+	logger logger
+	next   http.Handler
+}
+
+func (h *loggingHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.logger.log(r)
+	h.next.ServeHTTP(w, r)
+}

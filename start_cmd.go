@@ -100,7 +100,6 @@ func (s *startOpts) buildListenAndServe(server *http.Server) (func() error, erro
 }
 
 func startExec(opts *startOpts) error {
-	logger := &defaultLogger{}
 	config, err := readConfig(opts.configFile)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
@@ -115,14 +114,15 @@ func startExec(opts *startOpts) error {
 	} else {
 		store = nil
 	}
-	router, err := NewRouter(config, store, logger)
+	router, err := NewRouter(config, store)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
+	h := loggingHandler{logger: &defaultLogger{}, next: router}
 	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
 	server := &http.Server{
 		Addr:    listenAddr,
-		Handler: router,
+		Handler: &h,
 	}
 	c := make(chan os.Signal, 1)
 	listenAndServe, err := opts.buildListenAndServe(server)
