@@ -21,32 +21,26 @@ do
   esac
 done
 
-SOURCE="${BASH_SOURCE[0]}"
-while [ -h "$SOURCE" ] ; do SOURCE="$(readlink "$SOURCE")"; done
-DIR="$( cd -P "$( dirname "$SOURCE" )/.." && pwd )"
+PROJECT_DIR=$(git rev-parse --show-toplevel)
+cd $PROJECT_DIR
+source ${PROJECT_DIR}/scripts/lib.sh
 
-cd $DIR
+get_version ${PROJECT_DIR}
 
-XC_OS=$(go env GOOS)
-XC_ARCH=$(go env GOARCH)
-RAW_VERSION=$(./pkg/${XC_OS}_${XC_ARCH}/${PWD##*/} version)
-VERSION=${RAW_VERSION#* v}
-PRODUCT_NAME=$(echo "${RAW_VERSION% v*}" | tr '[:upper:]' '[:lower:]')
-
-echo "cleaning"
-rm -rf ./pkg/dist
-mkdir -p ./pkg/dist
+rm -rf ${PROJECT_DIR}/pkg/dist
+mkdir -p ${PROJECT_DIR}/pkg/dist
 
 for FILENAME in $(find ./pkg -mindepth 1 -maxdepth 1 -type f); do
   FILENAME=$(basename $FILENAME)
-  SOURCE_FILE=./pkg/${FILENAME}
-  TARGET_FILE=./pkg/dist/${PRODUCT_NAME}_${VERSION}_${FILENAME}
+  SOURCE_FILE=${PROJECT_DIR}/pkg/${FILENAME}
+  TARGET_FILE=${PROJECT_DIR}/pkg/dist/${PRODUCT_NAME}_${VERSION}_${FILENAME}
   echo "copying '$SOURCE_FILE' to '$TARGET_FILE'"
   cp $SOURCE_FILE $TARGET_FILE
 done
 
+${PROJECT_DIR}/scripts/docker/build.sh
+
 if (( $RELEASE == 1 )) ; then
-  OWNER="naighes"
   GH_API="https://api.github.com"
   GH_REPO="$GH_API/repos/$OWNER/$PRODUCT_NAME"
   AUTH_HEADER="Authorization: token $AUTH_TOKEN"
@@ -73,6 +67,7 @@ if (( $RELEASE == 1 )) ; then
       -H "Content-Type: application/octet-stream" \
       $GH_ASSET || { echo "invalid repo, token or network issue";  exit 1; }
   done
+  ${PROJECT_DIR}/scripts/docker/push.sh
 fi
 echo "done"
 exit 0
