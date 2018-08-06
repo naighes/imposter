@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"net/http"
@@ -8,12 +8,15 @@ import (
 )
 
 func TestReadStoredURL(t *testing.T) {
-	store := newInMemoryStore(Scheme | Host | Path | Query)
+	store, err := NewInMemoryStoreHandler("scheme|host|path|query")
+	if err != nil {
+		t.Errorf("cannot create a new instance of InMemoryStoreHandler: %v", err)
+	}
 	u, _ := url.Parse("http://fak.eurl")
 	r1 := httptest.NewRecorder()
 	r2 := httptest.NewRecorder()
-	store.ServeWrite(r1, &http.Request{URL: u})
-	exists := store.ServeRead(r2, &http.Request{URL: u})
+	store.ServeHTTP(r1, &http.Request{URL: u, Method: "PUT"})
+	exists := store.ServeHTTP(r2, &http.Request{URL: u, Method: "GET"})
 	const expected = 200
 	if r2.Code != expected {
 		t.Errorf("expected status code %d; got %d", expected, r2.Code)
@@ -24,22 +27,28 @@ func TestReadStoredURL(t *testing.T) {
 }
 
 func TestReadNonStoredURL(t *testing.T) {
-	store := newInMemoryStore(Scheme | Host | Path | Query)
+	store, err := NewInMemoryStoreHandler("scheme|host|path|query")
+	if err != nil {
+		t.Errorf("cannot create a new instance of InMemoryStoreHandler: %v", err)
+	}
 	u, _ := url.Parse("http://fak.eurl")
 	r := httptest.NewRecorder()
-	exists := store.ServeRead(r, &http.Request{URL: u})
+	exists := store.ServeHTTP(r, &http.Request{URL: u, Method: "GET"})
 	if exists {
 		t.Errorf("an esisting resorce was not expected")
 	}
 }
 
 func TestWriteStoredURL(t *testing.T) {
-	store := newInMemoryStore(Scheme | Host | Path | Query)
+	store, err := NewInMemoryStoreHandler("scheme|host|path|query")
+	if err != nil {
+		t.Errorf("cannot create a new instance of InMemoryStoreHandler: %v", err)
+	}
 	u, _ := url.Parse("http://fak.eurl")
 	r1 := httptest.NewRecorder()
 	r2 := httptest.NewRecorder()
-	store.ServeWrite(r1, &http.Request{URL: u})
-	store.ServeWrite(r2, &http.Request{URL: u})
+	store.ServeHTTP(r1, &http.Request{URL: u, Method: "PUT"})
+	store.ServeHTTP(r2, &http.Request{URL: u, Method: "PUT"})
 	const expected = 204
 	if r2.Code != expected {
 		t.Errorf("expected status code %d; got %d", expected, r2.Code)
@@ -47,10 +56,13 @@ func TestWriteStoredURL(t *testing.T) {
 }
 
 func TestWriteNonStoredURL(t *testing.T) {
-	store := newInMemoryStore(Scheme | Host | Path | Query)
+	store, err := NewInMemoryStoreHandler("scheme|host|path|query")
+	if err != nil {
+		t.Errorf("cannot create a new instance of InMemoryStoreHandler: %v", err)
+	}
 	u, _ := url.Parse("http://fak.eurl")
 	r := httptest.NewRecorder()
-	store.ServeWrite(r, &http.Request{URL: u})
+	store.ServeHTTP(r, &http.Request{URL: u, Method: "PUT"})
 	const expected = 202
 	if r.Code != expected {
 		t.Errorf("expected status code %d; got %d", expected, r.Code)
@@ -58,13 +70,16 @@ func TestWriteNonStoredURL(t *testing.T) {
 }
 
 func TestReadStoredURLWithoutQueryFlag(t *testing.T) {
-	store := newInMemoryStore(Scheme | Host | Path)
+	store, err := NewInMemoryStoreHandler("scheme|host|path")
+	if err != nil {
+		t.Errorf("cannot create a new instance of InMemoryStoreHandler: %v", err)
+	}
 	u1, _ := url.Parse("http://fak.eurl?id=1")
 	u2, _ := url.Parse("http://fak.eurl?id=2")
 	r1 := httptest.NewRecorder()
 	r2 := httptest.NewRecorder()
-	store.ServeWrite(r1, &http.Request{URL: u1})
-	exists := store.ServeRead(r2, &http.Request{URL: u2})
+	store.ServeHTTP(r1, &http.Request{URL: u1, Method: "PUT"})
+	exists := store.ServeHTTP(r2, &http.Request{URL: u2, Method: "GET"})
 	const expected = 200
 	if r2.Code != expected {
 		t.Errorf("expected status code %d; got %d", expected, r2.Code)

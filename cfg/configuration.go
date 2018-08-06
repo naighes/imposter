@@ -1,4 +1,4 @@
-package main
+package cfg
 
 import (
 	"encoding/json"
@@ -16,13 +16,8 @@ import (
 )
 
 type Config struct {
-	Options *ConfigOptions         `json:"options" yaml:"options"`
-	Defs    []*MatchDef            `json:"pattern_list" yaml:"pattern_list"`
-	Vars    map[string]interface{} `json:"vars" yaml:"vars"`
-}
-
-type ConfigOptions struct {
-	Cors bool `json:"enable_cors" yaml:"enable_cors"`
+	Defs []*MatchDef            `json:"pattern_list" yaml:"pattern_list"`
+	Vars map[string]interface{} `json:"vars" yaml:"vars"`
 }
 
 type MatchDef struct {
@@ -55,7 +50,7 @@ func parseYaml(j []byte) (*Config, error) {
 	return r, nil
 }
 
-func readConfig(configFile string) (*Config, error) {
+func ReadConfig(configFile string) (*Config, error) {
 	var err error
 	var configPath string
 	var rawConfig []byte
@@ -70,7 +65,7 @@ func readConfig(configFile string) (*Config, error) {
 	return &Config{}, err
 }
 
-func (def *MatchDef) validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
+func (def *MatchDef) Validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
 	var r []string
 	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
@@ -96,7 +91,7 @@ func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]
 	if err != nil {
 		r = append(r, fmt.Sprintf("%v", err))
 	}
-	_, err = rsp.parseHeaders(parse)
+	_, err = rsp.ParseHeaders(parse)
 	if err != nil {
 		if errors, ok := err.(*multierror.Error); ok {
 			for err := range errors.Errors {
@@ -162,7 +157,7 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	return a, nil
 }
 
-func (rsp *MatchRsp) parseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
+func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
 	headers := make(map[string]functions.Expression)
 	var errors error
 	if rsp.Headers != nil {
@@ -186,7 +181,7 @@ func (rsp *MatchRsp) parseHeaders(parse functions.ExpressionParser) (map[string]
 	return headers, nil
 }
 
-func (rsp *MatchRsp) parseStatusCode(parse functions.ExpressionParser) (functions.Expression, error) {
+func (rsp *MatchRsp) ParseStatusCode(parse functions.ExpressionParser) (functions.Expression, error) {
 	if rsp.StatusCode == "" {
 		return parse("${200}")
 	}

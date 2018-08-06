@@ -64,8 +64,6 @@ pattern_list:
   response:
     body: Hello, default body!
     status_code: ${200}
-options:
-  enable_cors: true
 vars:
   some_link: http://localhost:8080/aaa
   default_content_type: text/plain; charset=utf-8

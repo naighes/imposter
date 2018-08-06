@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -41,10 +41,10 @@ func TestFuncHTTPHandlerNoErrors(t *testing.T) {
 		e := &fakeExpression{rsp: &functions.HTTPRsp{StatusCode: expectedStatusCode, Body: expectedBody}}
 		return e, nil
 	}
-	h := FuncHTTPHandler{Content: "unrelevant content"}
-	f, err := h.HandleFunc(p)
+	h := funcHTTPHandler{content: "unrelevant content"}
+	f, err := h.handleFunc(p)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error")
+		t.Errorf("handleFunc raised an error")
 		return
 	}
 	f(r, nil)
@@ -71,10 +71,10 @@ func TestFuncHTTPHandlerWithErrors(t *testing.T) {
 		e := &errorExpression{err: "some error"}
 		return e, nil
 	}
-	h := FuncHTTPHandler{Content: "unrelevant content"}
-	f, err := h.HandleFunc(p)
+	h := funcHTTPHandler{content: "unrelevant content"}
+	f, err := h.handleFunc(p)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error")
+		t.Errorf("handleFunc raised an error")
 		return
 	}
 	f(r, nil)
@@ -91,10 +91,10 @@ func TestFuncHTTPHandlerWithoutHTTPRsp(t *testing.T) {
 		e := &functions.StringIdentity{Value: "some value"}
 		return e, nil
 	}
-	h := FuncHTTPHandler{Content: "unrelevant content"}
-	f, err := h.HandleFunc(p)
+	h := funcHTTPHandler{content: "unrelevant content"}
+	f, err := h.handleFunc(p)
 	if err != nil {
-		t.Errorf("HandleFunc raised an error")
+		t.Errorf("handleFunc raised an error")
 		return
 	}
 	f(r, nil)

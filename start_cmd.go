@@ -11,6 +11,9 @@ import (
 	"os/signal"
 	"strings"
 	"time"
+
+	"github.com/naighes/imposter/cfg"
+	"github.com/naighes/imposter/handlers"
 )
 
 const defaultPort int = 8080
@@ -24,20 +27,12 @@ func startCmd() command {
 	fs.StringVar(&opts.rawTLSKeyFileList, "tls-key-file-list", "", "A comma separated list of private key files corresponding to the X.509 certificates")
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	fs.StringVar(&opts.record, "record", "", "Enable the recording of PUT requests")
+	fs.BoolVar(&opts.cors, "cors", false, "enable CORS") // TODO: better description
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
 		return startExec(&opts)
 	}}
 }
-
-type RecordType int
-
-const (
-	Scheme RecordType = 1 << iota
-	Host
-	Path
-	Query
-)
 
 type startOpts struct {
 	port               int
@@ -46,28 +41,7 @@ type startOpts struct {
 	rawTLSCertFileList string
 	rawTLSKeyFileList  string
 	record             string
-}
-
-func (s *startOpts) recordConfig() (RecordType, error) {
-	if s.record == "" {
-		return 0, nil
-	}
-	m := map[string]RecordType{
-		"scheme": Scheme,
-		"host":   Host,
-		"path":   Path,
-		"query":  Query,
-	}
-	var r RecordType
-	e := strings.Split(s.record, "|")
-	for _, v := range e {
-		rt, ok := m[v]
-		if !ok {
-			return 0, fmt.Errorf("'%s' is not a valid flag: select multiple values from {'scheme', 'host', 'path', 'query'} separated by pipe (|)", v)
-		}
-		r = r | rt
-	}
-	return r, nil
+	cors               bool
 }
 
 func (s *startOpts) buildListenAndServe(server *http.Server) (func() error, error) {
@@ -100,27 +74,25 @@ func (s *startOpts) buildListenAndServe(server *http.Server) (func() error, erro
 }
 
 func startExec(opts *startOpts) error {
-	config, err := readConfig(opts.configFile)
+	config, err := cfg.ReadConfig(opts.configFile)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
-	var store Store
-	rt, err := opts.recordConfig()
-	if err != nil {
-		return err
+	var store handlers.StoreHandler
+	if opts.record != "" {
+		store, err = handlers.NewInMemoryStoreHandler(opts.record)
+		if err != nil {
+			return fmt.Errorf("could not load configuration: %v", err)
+		}
 	}
-	if rt != 0 {
-		store = newInMemoryStore(rt)
-	} else {
-		store = nil
-	}
-	router, err := NewRouter(config, store)
+	routerHandler, err := handlers.NewRouterHandler(config, store)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
 	// TODO: check Options is not nil
-	router.next = &corsHandler{enabled: config.Options.Cors}
-	h := loggingHandler{logger: &defaultLogger{}, next: router}
+	corsHandler := handlers.CorsHandler{Enabled: opts.cors}
+	loggingHandler := handlers.LoggingHandler{Logger: &handlers.DefaultLogger{}}
+	h := handlers.CompositeHandler{NestedHandlers: []http.Handler{&loggingHandler, &corsHandler, routerHandler}}
 	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
 	server := &http.Server{
 		Addr:    listenAddr,

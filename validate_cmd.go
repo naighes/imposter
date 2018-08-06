@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/naighes/imposter/cfg"
 	"github.com/naighes/imposter/functions"
 )
 
@@ -28,7 +29,7 @@ type validateOpts struct {
 
 func validateExec(opts *validateOpts) error {
 	var r []string
-	config, err := readConfig(opts.configFile)
+	config, err := cfg.ReadConfig(opts.configFile)
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
@@ -40,7 +41,7 @@ func validateExec(opts *validateOpts) error {
 	}
 	defs := config.Defs
 	for _, def := range defs {
-		errors := def.validate(functions.ParseExpression, vars)
+		errors := def.Validate(functions.ParseExpression, vars)
 		if len(errors) > 0 {
 			r = append(r, errors...)
 		}

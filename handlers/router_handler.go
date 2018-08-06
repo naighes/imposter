@@ -1,4 +1,4 @@
-package main
+package handlers
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	"github.com/naighes/imposter/cfg"
 	"github.com/naighes/imposter/functions"
 )
 
-type Router struct {
-	routes []*route
-	vars   map[string]interface{}
-	store  Store
-	next   http.Handler
+type RouterHandler struct {
+	routes       []*route
+	vars         map[string]interface{}
+	storeHandler StoreHandler
 }
 
 type route struct {
@@ -23,24 +23,9 @@ type route struct {
 	handler    http.Handler
 }
 
-func (router *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	router.serve(w, r)
-	if router.next != nil {
-		router.next.ServeHTTP(w, r)
-	}
-}
-
-func (router *Router) serve(w http.ResponseWriter, r *http.Request) {
-	if router.store != nil {
-		switch r.Method {
-		case "PUT":
-			router.store.ServeWrite(w, r)
-			return
-		case "GET", "HEAD":
-			if ok := router.store.ServeRead(w, r); ok {
-				return
-			}
-		}
+func (router *RouterHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	if router.storeHandler != nil && router.storeHandler.ServeHTTP(w, r) {
+		return
 	}
 	for _, route := range router.routes {
 		// TODO: X-Forwarded-Host?
@@ -67,11 +52,11 @@ func (router *Router) serve(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }
 
-func (router *Router) add(expression functions.Expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
+func (router *RouterHandler) add(expression functions.Expression, latency time.Duration, h func(http.ResponseWriter, *http.Request)) {
 	router.routes = append(router.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
-func NewRouter(config *Config, store Store) (*Router, error) {
+func NewRouterHandler(config *cfg.Config, storeHandler StoreHandler) (*RouterHandler, error) {
 	defs := config.Defs
 	var vars map[string]interface{}
 	if config.Vars == nil {
@@ -79,9 +64,9 @@ func NewRouter(config *Config, store Store) (*Router, error) {
 	} else {
 		vars = config.Vars
 	}
-	r := Router{}
+	r := RouterHandler{}
 	r.vars = vars
-	r.store = store
+	r.storeHandler = storeHandler
 	for _, def := range defs {
 		rule, err := functions.ParseExpression(def.RuleExpression)
 		if err != nil {
@@ -106,14 +91,14 @@ func writeError(w http.ResponseWriter, err error) {
 }
 
 func HandleFunc(o interface{}, vars map[string]interface{}) (func(http.ResponseWriter, *http.Request), error) {
-	var rsp MatchRsp
+	var rsp cfg.MatchRsp
 	err := mapstructure.Decode(o, &rsp)
 	if err == nil {
-		return MatchRspHTTPHandler{Content: &rsp, Vars: vars}.HandleFunc(functions.ParseExpression)
+		return matchRspHTTPHandler{content: &rsp, vars: vars}.handleFunc(functions.ParseExpression)
 	}
 	str, ok := o.(string)
 	if ok {
-		return FuncHTTPHandler{Content: str, Vars: vars}.HandleFunc(functions.ParseExpression)
+		return funcHTTPHandler{content: str, vars: vars}.handleFunc(functions.ParseExpression)
 	}
 	return nil, fmt.Errorf("operation is not supported")
 }

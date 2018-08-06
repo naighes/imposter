@@ -1,10 +1,11 @@
-package main
+package handlers
 
 import (
 	"fmt"
 	"net/http"
 	"reflect"
 
+	"github.com/naighes/imposter/cfg"
 	"github.com/naighes/imposter/functions"
 )
 
@@ -12,17 +13,17 @@ type HTTPHandler interface {
 	HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error)
 }
 
-type FuncHTTPHandler struct {
-	Content string
-	Vars    map[string]interface{}
+type funcHTTPHandler struct {
+	content string
+	vars    map[string]interface{}
 }
 
-func (h FuncHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
-	e, err := parse(h.Content)
+func (h funcHTTPHandler) handleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
+	e, err := parse(h.content)
 	if err != nil {
 		return nil, err
 	}
-	vars := h.Vars
+	vars := h.vars
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := &functions.EvaluationContext{Vars: vars, Req: r}
 		a, err := e.Evaluate(ctx)
@@ -47,26 +48,26 @@ func (h FuncHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http
 	}, nil
 }
 
-type MatchRspHTTPHandler struct {
-	Content *MatchRsp
-	Vars    map[string]interface{}
+type matchRspHTTPHandler struct {
+	content *cfg.MatchRsp
+	vars    map[string]interface{}
 }
 
-func (h MatchRspHTTPHandler) HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
-	rsp := h.Content
+func (h matchRspHTTPHandler) handleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error) {
+	rsp := h.content
 	e1, err := parse(rsp.Body)
 	if err != nil {
 		return nil, err
 	}
-	headers, err := rsp.parseHeaders(parse)
+	headers, err := rsp.ParseHeaders(parse)
 	if err != nil {
 		return nil, err
 	}
-	e2, err := rsp.parseStatusCode(parse)
+	e2, err := rsp.ParseStatusCode(parse)
 	if err != nil {
 		return nil, err
 	}
-	vars := h.Vars
+	vars := h.vars
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := &functions.EvaluationContext{Vars: vars, Req: r}
 		b, err := e1.Evaluate(ctx)
