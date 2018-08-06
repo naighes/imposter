@@ -33,6 +33,18 @@ func (e errorExpression) Test(ctx *functions.EvaluationContext) (interface{}, er
 	return nil, fmt.Errorf(e.err)
 }
 
+type stringExpression struct {
+	value string
+}
+
+func (e stringExpression) Evaluate(ctx *functions.EvaluationContext) (interface{}, error) {
+	return e.value, nil
+}
+
+func (e stringExpression) Test(ctx *functions.EvaluationContext) (interface{}, error) {
+	return e.value, nil
+}
+
 func TestFuncHTTPHandlerNoErrors(t *testing.T) {
 	const expectedStatusCode = 200
 	const expectedBody = "some content"
@@ -88,7 +100,7 @@ func TestFuncHTTPHandlerWithoutHTTPRsp(t *testing.T) {
 	const expectedStatusCode = 500
 	r := httptest.NewRecorder()
 	p := func(string) (functions.Expression, error) {
-		e := &functions.StringIdentity{Value: "some value"}
+		e := &stringExpression{value: "some value"}
 		return e, nil
 	}
 	h := funcHTTPHandler{content: "unrelevant content"}

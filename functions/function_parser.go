@@ -23,70 +23,70 @@ type Expression interface {
 	Test(*EvaluationContext) (interface{}, error)
 }
 
-type IfElse struct {
-	Guard Expression
-	Left  Expression
-	Right Expression
+type ifElse struct {
+	guard Expression
+	left  Expression
+	right Expression
 }
 
-type Function struct {
-	Name string
-	Args []Expression
+type function struct {
+	name string
+	args []Expression
 }
 
-type StringIdentity struct {
-	Value string
+type stringIdentity struct {
+	value string
 }
 
-type IntegerIdentity struct {
-	Value string
+type integerIdentity struct {
+	value string
 }
 
-type FloatIdentity struct {
-	Value string
+type floatIdentity struct {
+	value string
 }
 
-type BoolIdentity struct {
-	Value string
+type boolIdentity struct {
+	value string
 }
 
-type ArrayIdentity struct {
-	Elements []Expression
+type arrayIdentity struct {
+	elements []Expression
 }
 
-func (e StringIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	return e.Value, nil
+func (e stringIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	return e.value, nil
 }
 
-func (e StringIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+func (e stringIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	return e.Evaluate(ctx)
 }
 
-func (e IntegerIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	return strconv.Atoi(e.Value)
+func (e integerIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	return strconv.Atoi(e.value)
 }
 
-func (e IntegerIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+func (e integerIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	return e.Evaluate(ctx)
 }
 
-func (e FloatIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	return strconv.ParseFloat(e.Value, 64)
+func (e floatIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	return strconv.ParseFloat(e.value, 64)
 }
 
-func (e FloatIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+func (e floatIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	return e.Evaluate(ctx)
 }
 
-func (e BoolIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	return strconv.ParseBool(e.Value)
+func (e boolIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	return strconv.ParseBool(e.value)
 }
 
-func (e BoolIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+func (e boolIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	return e.Evaluate(ctx)
 }
 
-func (e ArrayIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+func (e arrayIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	f := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
 			return expression.Evaluate(ctx)
@@ -95,7 +95,7 @@ func (e ArrayIdentity) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return e.evaluate(f)
 }
 
-func (e ArrayIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
+func (e arrayIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	f := func(ctx *EvaluationContext) func(Expression) (interface{}, error) {
 		return func(expression Expression) (interface{}, error) {
 			return expression.Test(ctx)
@@ -104,10 +104,10 @@ func (e ArrayIdentity) Test(ctx *EvaluationContext) (interface{}, error) {
 	return e.evaluate(f)
 }
 
-func (e ArrayIdentity) evaluate(f func(Expression) (interface{}, error)) (interface{}, error) {
+func (e arrayIdentity) evaluate(f func(Expression) (interface{}, error)) (interface{}, error) {
 	var r []interface{}
 	var t reflect.Type
-	for index, element := range e.Elements {
+	for index, element := range e.elements {
 		a, err := f(element)
 		if err != nil {
 			return nil, err
@@ -176,32 +176,32 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 	return b, nil
 }
 
-func (e Function) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	b, err := getEvaluationFunc(e.Name)
+func (e function) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	b, err := getEvaluationFunc(e.name)
 	if err != nil {
 		return nil, err
 	}
-	f, err := b(e.Args)
+	f, err := b(e.args)
 	if err == nil {
 		return f.Evaluate(ctx)
 	}
 	return nil, err
 }
 
-func (e Function) Test(ctx *EvaluationContext) (interface{}, error) {
-	b, err := getEvaluationFunc(e.Name)
+func (e function) Test(ctx *EvaluationContext) (interface{}, error) {
+	b, err := getEvaluationFunc(e.name)
 	if err != nil {
 		return nil, err
 	}
-	f, err := b(e.Args)
+	f, err := b(e.args)
 	if err == nil {
 		return f.Test(ctx)
 	}
 	return nil, err
 }
 
-func (e IfElse) Evaluate(ctx *EvaluationContext) (interface{}, error) {
-	guard, err := e.Guard.Evaluate(ctx)
+func (e ifElse) Evaluate(ctx *EvaluationContext) (interface{}, error) {
+	guard, err := e.guard.Evaluate(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -211,9 +211,9 @@ func (e IfElse) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	}
 	var exp Expression
 	if guardValue {
-		exp = e.Left
+		exp = e.left
 	} else {
-		exp = e.Right
+		exp = e.right
 	}
 	val, err := exp.Evaluate(ctx)
 	if err != nil {
@@ -222,8 +222,8 @@ func (e IfElse) Evaluate(ctx *EvaluationContext) (interface{}, error) {
 	return val, nil
 }
 
-func (e IfElse) Test(ctx *EvaluationContext) (interface{}, error) {
-	guard, err := e.Guard.Test(ctx)
+func (e ifElse) Test(ctx *EvaluationContext) (interface{}, error) {
+	guard, err := e.guard.Test(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -231,11 +231,11 @@ func (e IfElse) Test(ctx *EvaluationContext) (interface{}, error) {
 	if !ok {
 		return nil, fmt.Errorf("evaluation error: cannot convert value '%v' to 'bool'", guard)
 	}
-	left, err := e.Left.Test(ctx)
+	left, err := e.left.Test(ctx)
 	if err != nil {
 		return nil, err
 	}
-	right, err := e.Right.Test(ctx)
+	right, err := e.right.Test(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -274,7 +274,7 @@ func stringParser(str string, start int) (Expression, int, error) {
 			continue
 		}
 	}
-	e := &StringIdentity{Value: str[start+1 : end]}
+	e := &stringIdentity{value: str[start+1 : end]}
 	return e, end + 1, nil
 }
 
@@ -302,9 +302,9 @@ func numberParser(str string, start int) (Expression, int, error) {
 	}
 	var e Expression
 	if dots == 0 {
-		e = &IntegerIdentity{Value: str[start:end]}
+		e = &integerIdentity{value: str[start:end]}
 	} else {
-		e = &FloatIdentity{Value: str[start:end]}
+		e = &floatIdentity{value: str[start:end]}
 	}
 	return e, end, nil
 }
@@ -360,7 +360,7 @@ func functionParser(str string, start int) (Expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &Function{Name: name, Args: args}
+	e := &function{name: name, args: args}
 	return e, end, nil
 }
 
@@ -416,7 +416,7 @@ func ifParser(str string, start int) (Expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &IfElse{Guard: guard, Left: left, Right: right}
+	e := &ifElse{guard: guard, left: left, right: right}
 	return e, start, nil
 }
 
@@ -426,7 +426,7 @@ func arrayParser(str string, start int) (Expression, int, error) {
 	if err != nil {
 		return nil, -1, err
 	}
-	e := &ArrayIdentity{Elements: args}
+	e := &arrayIdentity{elements: args}
 	return e, end, nil
 }
 
@@ -455,13 +455,13 @@ func getParser(str string, start int) (parser, int, error) {
 		if isLetter(c) {
 			if len(str) >= start+4 && str[start:start+4] == "true" {
 				return func(string, int) (Expression, int, error) {
-					e := &BoolIdentity{Value: "true"}
+					e := &boolIdentity{value: "true"}
 					return e, start + 4, nil
 				}, start, nil
 			}
 			if len(str) >= start+5 && str[start:start+5] == "false" {
 				return func(string, int) (Expression, int, error) {
-					e := &BoolIdentity{Value: "false"}
+					e := &boolIdentity{value: "false"}
 					return e, start + 5, nil
 				}, start, nil
 			}
@@ -546,7 +546,7 @@ func ParseExpression(str string) (Expression, error) {
 		}
 		return e, nil
 	}
-	e := &StringIdentity{Value: str}
+	e := &stringIdentity{value: str}
 	return e, nil
 }
 
