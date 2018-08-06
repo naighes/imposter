@@ -22,7 +22,7 @@ func startCmd() command {
 	fs := flag.NewFlagSet("imposter start", flag.ExitOnError)
 	opts := startOpts{port: defaultPort}
 	fs.IntVar(&opts.port, "port", defaultPort, "The listening TCP port")
-	fs.StringVar(&opts.configFile, "config-file", "stdin", "The configuration file")
+	fs.StringVar(&opts.configFile, "config-file", "", "The configuration file")
 	fs.StringVar(&opts.rawTLSCertFileList, "tls-cert-file-list", "", "A comma separated list of X.509 certificates to secure communication")
 	fs.StringVar(&opts.rawTLSKeyFileList, "tls-key-file-list", "", "A comma separated list of private key files corresponding to the X.509 certificates")
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")

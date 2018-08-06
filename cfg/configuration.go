@@ -51,6 +51,9 @@ func parseYaml(j []byte) (*Config, error) {
 }
 
 func ReadConfig(configFile string) (*Config, error) {
+	if configFile == "" {
+		return &Config{}, nil
+	}
 	var err error
 	var configPath string
 	var rawConfig []byte
@@ -62,7 +65,7 @@ func ReadConfig(configFile string) (*Config, error) {
 			}
 		}
 	}
-	return &Config{}, err
+	return nil, err
 }
 
 func (def *MatchDef) Validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
