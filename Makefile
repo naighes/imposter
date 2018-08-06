@@ -17,6 +17,12 @@ bin: fmtcheck
 dev: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/build.sh'"
 
+dist: bin
+ifndef GH_AUTH_TOKEN
+	$(error environment variable GH_AUTH_TOKEN is undefined)
+endif
+	@sh -c "'$(CURDIR)/scripts/dist.sh' $(GH_AUTH_TOKEN)"
+
 .NOTPARALLEL:
 
-.PHONY: default fmtcheck fmt test bin dev
+.PHONY: default fmtcheck fmt test bin dev dist

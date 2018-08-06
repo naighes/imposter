@@ -7,6 +7,8 @@ ARG OWNER=UNSPECIFIED
 
 RUN apk add --update git bash openssh zip
 
+EXPOSE 8080
+
 WORKDIR $GOPATH/src/github.com/${OWNER}/${PRODUCT_NAME}
 COPY . .
 RUN /bin/bash scripts/build.sh --release

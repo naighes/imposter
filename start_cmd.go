@@ -93,7 +93,7 @@ func startExec(opts *startOpts) error {
 	corsHandler := handlers.CorsHandler{Enabled: opts.cors}
 	loggingHandler := handlers.LoggingHandler{Logger: &handlers.DefaultLogger{}}
 	h := handlers.CompositeHandler{NestedHandlers: []http.Handler{&loggingHandler, &corsHandler, routerHandler}}
-	listenAddr := fmt.Sprintf("localhost:%d", opts.port)
+	listenAddr := fmt.Sprintf(":%d", opts.port)
 	server := &http.Server{
 		Addr:    listenAddr,
 		Handler: &h,

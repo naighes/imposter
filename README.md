@@ -4,12 +4,27 @@
 
 **imPOSTer** is a lightweight and versatile tool for the mocking of web applications.
 
-## Source
+## Install
 You need `go` installed and `GOBIN` in your `PATH`. Once that is done, run the
 command:
 ```sh
 $ go get -u github.com/naighes/imposter
 ```
+
+### Precompiled binaries
+
+Precompiled binaries for released versions are available in the [releases section](https://github.com/naighes/imposter/releases). Using the latest production release binary is the recommended way of installing **imPOSTer**.
+
+### Docker images
+
+Docker images are available on [Docker Hub](https://hub.docker.com/r/naighes/imposter).  
+You can launch an **imPOSTer** container for trying it out with:
+
+```sh
+$ docker run --name imposter -d -p 8080:8080 --rm naighes/imposter start
+```
+
+**imPOSTer** will now be reachable at http://localhost:8080.
 
 ---
 
@@ -163,7 +178,7 @@ vars:
 ### Built-in functions
 
 You can "combine" values with other values. These combinations are wrapped into the evaluation block marker (`${…}`), such as `${link("https://github.com/naighes/imposter")}`.  
-Imposter ships with built-in functions. Functions are called with the syntax `function_name(arg1, arg2, ...)`. For example, to read a file: `${file("path.txt")}`.
+**imPOSTer** ships with built-in functions. Functions are called with the syntax `function_name(arg1, arg2, ...)`. For example, to read a file: `${file("path.txt")}`.
 
 #### Supported built-in functions
 The supported built-in functions are:  
