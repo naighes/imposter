@@ -32,7 +32,7 @@ type MatchRsp struct {
 	StatusCode string                 `mapstructure:"status_code"`
 }
 
-func ParseConfig(j []byte) (*Config, error) {
+func parseConfig(j []byte) (*Config, error) {
 	var r *Config
 	err := json.Unmarshal(j, &r)
 	if err != nil {
@@ -57,7 +57,7 @@ func ReadConfig(configFile string) (*Config, error) {
 	var config *Config
 	if configPath, err = filepath.Abs(configFile); err == nil {
 		if rawConfig, err = ioutil.ReadFile(configPath); err == nil {
-			if config, err = ParseConfig(rawConfig); err == nil {
+			if config, err = parseConfig(rawConfig); err == nil {
 				return config, nil
 			}
 		}

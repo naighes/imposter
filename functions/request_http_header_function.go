@@ -28,9 +28,8 @@ func (f requestHTTPHeaderFunction) evaluate(g func(Expression) (interface{}, err
 	}
 	if h := req.Header; h != nil {
 		return req.Header.Get(b), nil
-	} else {
-		return "", fmt.Errorf("no http headers in source HTTP request")
 	}
+	return "", fmt.Errorf("no http headers in source HTTP request")
 }
 
 func (f requestHTTPHeaderFunction) Evaluate(ctx *EvaluationContext) (interface{}, error) {
