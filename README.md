@@ -24,6 +24,7 @@ Run a new instance of **imPOSTer**.
  * `-tls-cert-file-list <string>`: a comma separated list of x.509 certificates to secure communication
  * `-tls-key-file-list <string>`: a comma separated list of private key files corresponding to the x.509 certificates listed in `-tls-cert-file-list <string>`
  * `-record <string>`: Enable the recording of PUT requests (select multiple values from {`scheme`, `host`, `path`, `query`} separated by pipe (`|`))
+ * `-cors`: Enable the support for CORS
 
 ### Example
 

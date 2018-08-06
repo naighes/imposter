@@ -27,7 +27,7 @@ func startCmd() command {
 	fs.StringVar(&opts.rawTLSKeyFileList, "tls-key-file-list", "", "A comma separated list of private key files corresponding to the X.509 certificates")
 	fs.DurationVar(&opts.wait, "graceful-timeout", time.Second*15, "The duration for which the server gracefully wait for existing connections to finish - e.g. 15s or 1m")
 	fs.StringVar(&opts.record, "record", "", "Enable the recording of PUT requests")
-	fs.BoolVar(&opts.cors, "cors", false, "enable CORS") // TODO: better description
+	fs.BoolVar(&opts.cors, "cors", false, "Enables the support for CORS")
 	return command{fs, func(args []string) error {
 		fs.Parse(args)
 		return startExec(&opts)
