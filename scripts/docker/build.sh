@@ -9,10 +9,7 @@ get_version ${PROJECT_DIR}
 
 docker build \
     --no-cache \
-    --build-arg=PRODUCT_NAME=${PRODUCT_NAME} \
-    --build-arg=VERSION=${VERSION} \
-    --build-arg=OWNER=${OWNER} \
-    -t ${OWNER}/$PRODUCT_NAME:$VERSION \
+    -t ${OWNER}/${PRODUCT_NAME}:${VERSION} \
     .
 
 docker tag \

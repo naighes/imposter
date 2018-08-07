@@ -230,6 +230,22 @@ pattern_list:
   status_code: ${200}
 ```
 
+## Induced latency
+
+We're used to mock our application dependencies so we can test the application's behaviour by the proper isolation degree.
+Furthermore, sometimes it's useful to test how our application behaves due to the change of certain conditions (UX, load/stress testin, etc).  
+**imPOSTer** has the capability of inducing some latency before a response object is returned back to the client:
+
+```yaml
+pattern_list:
+- rule_expression: ${regex_match(request_url_path(), "^/myredirect$")}
+  response: ${redirect("http://examp.lecom/foo", 301)}
+  latency: 2000
+```
+
+The above `rule_expression` introduces a 2 seconds delay.  
+**Note:** latency MUST be expressed in milliseconds.
+
 ## Recording
 
 **imPOSTer** can be configured to dynamically define rules at runtime.

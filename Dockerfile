@@ -1,20 +1,15 @@
 FROM golang:alpine
-LABEL maintainer="Nicola Baldi (@${OWNER}) <nic.baldi@gmail.com>"
-
-ARG PRODUCT_NAME=UNSPECIFIED
-ARG VERSION=UNSPECIFIED
-ARG OWNER=UNSPECIFIED
-
-RUN apk add --update git bash openssh zip
-
-EXPOSE 8080
-
-WORKDIR $GOPATH/src/github.com/${OWNER}/${PRODUCT_NAME}
+WORKDIR $GOPATH/src/github.com/naighes/imposter
+RUN apk add --update bash git zip openssh
 COPY . .
 RUN /bin/bash scripts/build.sh --release
-RUN cp "./pkg/$(go env GOOS)_$(go env GOARCH)/${PRODUCT_NAME}" $GOPATH/bin/imposter
+RUN cd $GOPATH/src/github.com/naighes/imposter/pkg/$(go env GOOS)_$(go env GOARCH) && cp ./imposter $GOPATH/bin/imposter
 
-LABEL "com.${OWNER}.${PRODUCT_NAME}.version"="${VERSION}"
-
+FROM golang:alpine
+LABEL maintainer="Nicola Baldi (@naighes) <nic.baldi@gmail.com>"
+LABEL "com.naighes.imposter.version"="${VERSION}"
+RUN apk add --update openssh
+COPY --from=0 /go/bin/imposter /go/bin/imposter
+EXPOSE 8080
 WORKDIR $GOPATH
 ENTRYPOINT ["imposter"]
