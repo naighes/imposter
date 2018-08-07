@@ -4,6 +4,7 @@ import (
 	"net/http"
 )
 
+// CorsHandler is a type providing basic support for Cross-Origin Resource Sharing.
 type CorsHandler struct {
 	Enabled bool
 }

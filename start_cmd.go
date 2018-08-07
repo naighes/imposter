@@ -89,7 +89,6 @@ func startExec(opts *startOpts) error {
 	if err != nil {
 		return fmt.Errorf("could not load configuration: %v", err)
 	}
-	// TODO: check Options is not nil
 	corsHandler := handlers.CorsHandler{Enabled: opts.cors}
 	loggingHandler := handlers.LoggingHandler{Logger: &handlers.DefaultLogger{}}
 	h := handlers.CompositeHandler{NestedHandlers: []http.Handler{&loggingHandler, &corsHandler, routerHandler}}

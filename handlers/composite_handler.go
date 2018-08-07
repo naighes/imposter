@@ -4,6 +4,7 @@ import (
 	"net/http"
 )
 
+// CompositeHandler type executes a set of http.Handler sequentially.
 type CompositeHandler struct {
 	NestedHandlers []http.Handler
 }

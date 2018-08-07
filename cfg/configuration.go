@@ -15,17 +15,27 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// Config represents an imPOSTer configuration.
+// A set of rule expressions can be defined dy Defs field.
 type Config struct {
 	Defs []*MatchDef            `json:"pattern_list" yaml:"pattern_list"`
 	Vars map[string]interface{} `json:"vars" yaml:"vars"`
 }
 
+// MatchDef represents a single rule expression.
+// The RuleExpression field wraps a boolean expression every incoming HTTP request is matched against.
+// How a matching rule expression should be managed is defined by the Response object.
 type MatchDef struct {
 	RuleExpression string        `json:"rule_expression" yaml:"rule_expression"`
 	Latency        time.Duration `json:"latency" yaml:"latency"`
 	Response       interface{}   `json:"response" yaml:"response"`
 }
 
+// MatchRsp is the fully structured version of a Response object.
+// Body represents the payload to be returned and it can be an expression as well.
+// Headers is a collection of HTTP headers to be returned and each entry can be an expression.
+// StatusCode represents the resulting HTTP status code and it MUST be an expression:
+//		rsp := MatchRsp{Body: "some content", StatusCode: `${200}`}
 type MatchRsp struct {
 	Body       string                 `mapstructure:"body"`
 	Headers    map[string]interface{} `mapstructure:"headers"`
@@ -50,6 +60,7 @@ func parseYaml(j []byte) (*Config, error) {
 	return r, nil
 }
 
+// ReadConfig takes a path as an input and parses its content to build the imPOSTer configuration.
 func ReadConfig(configFile string) (*Config, error) {
 	if configFile == "" {
 		return &Config{}, nil
@@ -68,6 +79,8 @@ func ReadConfig(configFile string) (*Config, error) {
 	return nil, err
 }
 
+// Validate method parses the current expression trying to catch potential evaluation errors.
+// An empty array is returned whether no errors were found.
 func (def *MatchDef) Validate(parse functions.ExpressionParser, vars map[string]interface{}) []string {
 	var r []string
 	if err := validateRuleExpression(def.RuleExpression, vars); err != nil {
@@ -160,6 +173,8 @@ func validateEvaluation(expression string, vars map[string]interface{}) (interfa
 	return a, nil
 }
 
+// ParseHeaders evaluates any HTTP header and returns an expression for each of them.
+// It returns an error in case of evaluation failures.
 func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]functions.Expression, error) {
 	headers := make(map[string]functions.Expression)
 	var errors error
@@ -184,6 +199,8 @@ func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]
 	return headers, nil
 }
 
+// ParseStatusCode evaluates the resulting status code expression to an integer.
+// It returns an error in case of evaluation failures.
 func (rsp *MatchRsp) ParseStatusCode(parse functions.ExpressionParser) (functions.Expression, error) {
 	if rsp.StatusCode == "" {
 		return parse("${200}")

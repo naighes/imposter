@@ -7,10 +7,12 @@ import (
 	"net/http"
 )
 
+// Logger defines a general abstraction for the logging of HTTP requests.
 type Logger interface {
 	log(r *http.Request)
 }
 
+// DefaultLogger is a basic implementation of Logger.
 type DefaultLogger struct {
 }
 
@@ -25,6 +27,7 @@ func (l *DefaultLogger) log(r *http.Request) {
 	log.Printf("\n%s %s %s\nHost: %s\n%s\n", r.Method, r.URL.String(), r.Proto, r.Host, b.String())
 }
 
+// LoggingHandler is an http.Handler which provide logging for HTTP requests by using the specified Logger.
 type LoggingHandler struct {
 	Logger Logger
 }

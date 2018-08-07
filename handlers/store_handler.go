@@ -21,6 +21,7 @@ const (
 	query
 )
 
+// StoreHandler type defines an handler to support imPOSTer recording capabilities.
 type StoreHandler interface {
 	ServeHTTP(http.ResponseWriter, *http.Request) bool
 }
@@ -53,6 +54,7 @@ func parseRecordConfig(config string) (recordType, error) {
 	return r, nil
 }
 
+// NewInMemoryStoreHandler builds a new instance of StoreHandler.
 func NewInMemoryStoreHandler(config string) (StoreHandler, error) {
 	lock := sync.RWMutex{}
 	entries := make(map[string]*functions.HTTPRsp)

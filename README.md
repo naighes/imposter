@@ -1,4 +1,4 @@
-# naighes/imposter [![Build Status](https://travis-ci.com/naighes/imposter.svg?branch=master)](https://travis-ci.com/naighes/imposter)
+# naighes/imposter [![Build Status](https://travis-ci.com/naighes/imposter.svg?branch=master)](https://travis-ci.com/naighes/imposter) ![Go Report Card](https://goreportcard.com/badge/github.com/naighes/imposter) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ![imPOSTer Logo](https://raw.githubusercontent.com/naighes/imposter/master/readme_files/logo.png)
 

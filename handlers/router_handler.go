@@ -11,6 +11,8 @@ import (
 	"github.com/naighes/imposter/functions"
 )
 
+// RouterHandler type processes all incoming HTTP requests and look up for any matching rule expression.
+// Then it applies the specified response object in case of a successful match.
 type RouterHandler struct {
 	routes       []*route
 	vars         map[string]interface{}
@@ -56,6 +58,7 @@ func (router *RouterHandler) add(expression functions.Expression, latency time.D
 	router.routes = append(router.routes, &route{expression, latency, http.HandlerFunc(h)})
 }
 
+// NewRouterHandler builds a new RouterHandler.
 func NewRouterHandler(config *cfg.Config, storeHandler StoreHandler) (*RouterHandler, error) {
 	defs := config.Defs
 	var vars map[string]interface{}
@@ -90,6 +93,7 @@ func writeError(w http.ResponseWriter, err error) {
 	fmt.Fprintf(w, err.Error())
 }
 
+// HandleFunc type determines the proper HTTPHandler the current HTTP request should be managed by.
 func HandleFunc(o interface{}, vars map[string]interface{}) (func(http.ResponseWriter, *http.Request), error) {
 	var rsp cfg.MatchRsp
 	err := mapstructure.Decode(o, &rsp)

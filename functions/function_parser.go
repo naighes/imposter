@@ -540,7 +540,7 @@ func ParseExpression(str string) (Expression, error) {
 		if p == nil {
 			return nil, prettyError("could not find a parser for the current token", str, start)
 		}
-		e, start, err := p(str, start)
+		e, _, err := p(str, start)
 		if err != nil {
 			return nil, err
 		}

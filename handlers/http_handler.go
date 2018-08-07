@@ -9,8 +9,9 @@ import (
 	"github.com/naighes/imposter/functions"
 )
 
+// HTTPHandler takes a parser as input and returns an http.Handler.
 type HTTPHandler interface {
-	HandleFunc(parse functions.ExpressionParser) (func(http.ResponseWriter, *http.Request), error)
+	HandleFunc(parse functions.ExpressionParser) (http.Handler, error)
 }
 
 type funcHTTPHandler struct {
