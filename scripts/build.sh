@@ -37,11 +37,12 @@ fi
 
 go get -d
 
-gox \
+CGO_ENABLED=0 gox \
   -os="${XC_OS}" \
   -arch="${XC_ARCH}" \
   -osarch="${XC_EXCLUDE_OSARCH}" \
   -ldflags "${LD_FLAGS}" \
+  --rebuild \
   -output "${PROJECT_DIR}/pkg/{{.OS}}_{{.Arch}}/${PRODUCT_NAME}"
 
 for PLATFORM in $(find ${PROJECT_DIR}/pkg -mindepth 1 -maxdepth 1 -type d); do
