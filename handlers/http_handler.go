@@ -71,10 +71,15 @@ func (h matchRspHTTPHandler) handleFunc(parse functions.ExpressionParser) (func(
 	vars := h.vars
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := &functions.EvaluationContext{Vars: vars, Req: r}
-		b, err := e1.Evaluate(ctx)
-		if err != nil {
-			writeError(w, err)
-			return
+		var b interface{}
+		if r.Method == "HEAD" {
+			b = ""
+		} else {
+			b, err = e1.Evaluate(ctx)
+			if err != nil {
+				writeError(w, err)
+				return
+			}
 		}
 		statusCode, err := evaluateStatusCode(e2, ctx)
 		if err != nil {

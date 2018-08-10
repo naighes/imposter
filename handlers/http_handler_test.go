@@ -3,9 +3,11 @@ package handlers
 import (
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/naighes/imposter/cfg"
 	"github.com/naighes/imposter/functions"
 )
 
@@ -112,6 +114,29 @@ func TestFuncHTTPHandlerWithoutHTTPRsp(t *testing.T) {
 	f(r, nil)
 	if r.Code != expectedStatusCode {
 		t.Errorf("expected status code %d; got %d", expectedStatusCode, r.Code)
+		return
+	}
+}
+
+func TestNoBodyWhenMethodIsHead(t *testing.T) {
+	const expectedBody = ""
+	r := httptest.NewRecorder()
+	c := cfg.MatchRsp{StatusCode: "${200}", Body: "some content"}
+	h := matchRspHTTPHandler{content: &c}
+	f, err := h.handleFunc(functions.ParseExpression)
+	if err != nil {
+		t.Errorf("handleFunc raised an error")
+		return
+	}
+	f(r, &http.Request{Method: "HEAD"})
+	rsp := r.Result()
+	var body []byte
+	if body, err = ioutil.ReadAll(rsp.Body); err != nil {
+		t.Errorf("cannot read body")
+		return
+	}
+	if b := string(body); b != expectedBody {
+		t.Errorf("expected body '%s'; got '%s'", expectedBody, b)
 		return
 	}
 }
