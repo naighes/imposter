@@ -225,6 +225,7 @@ The supported built-in functions are:
  * `in(source: array, item: string|bool|int|flota64) -> bool` - Determines whether the specified `item` exists as an element within the `source` array  object.
  * `to_string(obj: any) -> string` - Returns a string that represents `obj`.
  * `rnd_string(size: int) -> string` - Returns a random string with the specified `size`.
+ * `concat(arg1: string, arg2: string, …) -> string` - Concatenates two or more strings.
 
 #### Conditional statements
 A conditional statement identifies which statement to run based on the value of a boolean expression.  

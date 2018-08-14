@@ -174,6 +174,8 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 		b = newToStringFunction
 	case "rnd_string":
 		b = newRndStringFunction
+	case "concat":
+		b = newConcatFunction
 	default:
 		return nil, fmt.Errorf("could not find a built-in function with name '%s'", name)
 	}
