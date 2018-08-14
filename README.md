@@ -122,7 +122,7 @@ pattern_list:
 Last but not least, you need to define the HTTP `status_code` to be returned (200 when not specified).
 Note that `status_code` is an expression itself and so it needs to be wrapped into the block marker (`${...}`).
 Furthermore, a positive integer value is expected from its evaluation (e.g. `status_code: ${if(contains(request_http_header("Accept-Language"), "it")) 200 else 404}`).  
-Rules are tested in the order they were added to the `pattern_list` collection. If two rules match, the first one wins:
+Rules are tested in the order they were added to the `pattern_list` collection. If two rules match, the first one wins.
 
 ### The response object
 
@@ -173,6 +173,27 @@ pattern_list:
   response: ${redirect(var("imposter_link"), 301)}
 vars:
   imposter_link: https://github.com/naighes/imposter
+```
+
+### Cookies
+
+A `Set-Cookie` facility is also provided.  
+Here's an example:
+
+```yaml
+pattern_list:
+- rule_expression: ${regex_match(request_url_path(), "^/cookietest$")}
+  response:
+    body: Hello, cookies!
+    headers:
+      Content-Type: text/plain; charset=utf-8
+    status_code: ${200}
+    cookies:
+      some_cookie:
+        value: some_value
+        path: "/"
+        domain: fak.eurl
+        expires: Sat, 01 Jan 2028 12:00:00 GMT
 ```
 
 ### Built-in functions

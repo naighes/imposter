@@ -1,12 +1,8 @@
-## 1.0.1 (Unreleased)
+## 1.1.1 (Unreleased)
 
 NEW FEATURES:
 
-
-
-IMPROVEMENTS:
-
-
+* providing a facility for `Set-Cookie`.
 
 BUG FIXES:
 

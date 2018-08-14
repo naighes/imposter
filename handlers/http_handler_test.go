@@ -140,3 +140,23 @@ func TestNoBodyWhenMethodIsHead(t *testing.T) {
 		return
 	}
 }
+
+func TestHTTPCookie(t *testing.T) {
+	r := httptest.NewRecorder()
+	cookie := cfg.HTTPCookie{Value: "some value"}
+	c := cfg.MatchRsp{StatusCode: "${200}", Body: "some content", Cookies: map[string]cfg.HTTPCookie{
+		"cookie": cookie,
+	}}
+	h := matchRspHTTPHandler{content: &c}
+	f, err := h.handleFunc(functions.ParseExpression)
+	if err != nil {
+		t.Errorf("handleFunc raised an error")
+		return
+	}
+	f(r, &http.Request{Method: "HEAD"})
+	cookies := r.Result().Cookies()
+	if l := len(cookies); l != 1 {
+		t.Errorf("expected '%d' cookie(s); got '%d' instead ", 1, l)
+		return
+	}
+}

@@ -12,6 +12,12 @@ pattern_list:
     headers:
       Content-Type: text/plain; charset=utf-8
     status_code: ${200}
+    cookies:
+      test_cookie:
+        value: test_value
+        path: "/"
+        domain: fak.eurl
+        expires: Sat, 01 Jan 2028 12:00:00 GMT
 - rule_expression: ${regex_match(request_url_path(), "^/myarray$")}
   response:
     body: "${[\"Hello\", \" world!\"]}"

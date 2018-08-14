@@ -18,6 +18,8 @@ type EvaluationContext struct {
 
 type ExpressionParser = func(string) (Expression, error)
 
+// Expression is an interface representing the result
+// of a parsing operation.
 type Expression interface {
 	Evaluate(*EvaluationContext) (interface{}, error)
 	Test(*EvaluationContext) (interface{}, error)
@@ -247,6 +249,7 @@ func (e ifElse) Test(ctx *EvaluationContext) (interface{}, error) {
 	return left, nil
 }
 
+// HTTPRsp represents an abstraction for an HTTP response message.
 type HTTPRsp struct {
 	Body       string
 	Headers    http.Header
@@ -529,6 +532,8 @@ func parseArgs(str string, start int, endToken byte) ([]Expression, int, error) 
 	return r, start, nil
 }
 
+// ParseExpression takes a string as an input and
+// evaluates its content by returning an Expression.
 func ParseExpression(str string) (Expression, error) {
 	if strings.Index(str, "${") == 0 && str[len(str)-1] == '}' {
 		str = str[2 : len(str)-1]

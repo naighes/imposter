@@ -40,6 +40,14 @@ type MatchRsp struct {
 	Body       string                 `mapstructure:"body"`
 	Headers    map[string]interface{} `mapstructure:"headers"`
 	StatusCode string                 `mapstructure:"status_code"`
+	Cookies    map[string]HTTPCookie  `mapstructure:"cookies"`
+}
+
+type HTTPCookie struct {
+	Value   string `json:"value" yaml:"value"`
+	Path    string `json:"path" yaml:"path"`
+	Domain  string `json:"domain" yaml:"domain"`
+	Expires string `json:"expires" yaml:"expires"`
 }
 
 func parseConfig(j []byte) (*Config, error) {
@@ -108,6 +116,14 @@ func (rsp *MatchRsp) validate(parse functions.ExpressionParser, vars map[string]
 		r = append(r, fmt.Sprintf("%v", err))
 	}
 	_, err = rsp.ParseHeaders(parse)
+	if err != nil {
+		if errors, ok := err.(*multierror.Error); ok {
+			for err := range errors.Errors {
+				r = append(r, fmt.Sprintf("%v", err))
+			}
+		}
+	}
+	_, err = rsp.ParseCookies(parse)
 	if err != nil {
 		if errors, ok := err.(*multierror.Error); ok {
 			for err := range errors.Errors {
@@ -197,6 +213,46 @@ func (rsp *MatchRsp) ParseHeaders(parse functions.ExpressionParser) (map[string]
 		return nil, errors
 	}
 	return headers, nil
+}
+
+func (rsp *MatchRsp) ParseCookies(parse functions.ExpressionParser) (map[string]map[string]functions.Expression, error) {
+	if rsp.Cookies == nil {
+		return map[string]map[string]functions.Expression{}, nil
+	}
+	cookies := make(map[string]map[string]functions.Expression)
+	var errors error
+	for k, c := range rsp.Cookies {
+		cookie := make(map[string]functions.Expression)
+		v, err := parse(c.Value)
+		if err != nil {
+			errors = multierror.Append(errors, err)
+		} else {
+			cookie["value"] = v
+		}
+		p, err := parse(c.Path)
+		if err != nil {
+			errors = multierror.Append(errors, err)
+		} else {
+			cookie["path"] = p
+		}
+		d, err := parse(c.Domain)
+		if err != nil {
+			errors = multierror.Append(errors, err)
+		} else {
+			cookie["domain"] = d
+		}
+		e, err := parse(c.Expires)
+		if err != nil {
+			errors = multierror.Append(errors, err)
+		} else {
+			cookie["expires"] = e
+		}
+		cookies[k] = cookie
+	}
+	if errors != nil {
+		return nil, errors
+	}
+	return cookies, nil
 }
 
 // ParseStatusCode evaluates the resulting status code expression to an integer.
