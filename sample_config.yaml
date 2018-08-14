@@ -2,6 +2,17 @@
 pattern_list:
 - rule_expression: ${
       and(
+        contains(request_url_path(), "rnd"),
+        eq(request_http_method(), "GET")
+      )
+    }
+  response:
+    body: ${rnd_string(5)}
+    headers:
+      Content-Type: text/plain; charset=utf-8
+    status_code: ${200}
+- rule_expression: ${
+      and(
         contains(request_url_path(), "hello"),
         eq(request_http_method(), "POST"),
         eq(request_http_header("Content-Type"), "application/json")

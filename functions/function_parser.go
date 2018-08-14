@@ -172,6 +172,8 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 		b = newInFunction
 	case "to_string":
 		b = newToStringFunction
+	case "rnd_string":
+		b = newRndStringFunction
 	default:
 		return nil, fmt.Errorf("could not find a built-in function with name '%s'", name)
 	}

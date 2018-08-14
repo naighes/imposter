@@ -3,6 +3,7 @@
 NEW FEATURES:
 
 * providing a facility for `Set-Cookie`.
+* introducing built-in function `rnd_string`.
 
 BUG FIXES:
 
