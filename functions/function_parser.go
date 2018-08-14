@@ -174,6 +174,8 @@ func getEvaluationFunc(name string) (func(args []Expression) (Expression, error)
 		b = newToStringFunction
 	case "rnd_string":
 		b = newRndStringFunction
+	case "rnd_int":
+		b = newRndIntFunction
 	case "concat":
 		b = newConcatFunction
 	default:

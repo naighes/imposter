@@ -7,7 +7,7 @@ pattern_list:
       )
     }
   response:
-    body: ${concat("the string '", rnd_string(5), "' has been randomly generated")}
+    body: ${concat("the string '", rnd_string(5), "' and the number '", rnd_int(6, 45), "' have been randomly generated")}
     headers:
       Content-Type: text/plain; charset=utf-8
     status_code: ${200}

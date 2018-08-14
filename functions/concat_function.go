@@ -26,9 +26,10 @@ func (f concatFunction) evaluate(g func(Expression) (interface{}, error)) (inter
 		}
 		b, ok := a.(string)
 		if !ok {
-			return false, fmt.Errorf("evaluation error: cannot convert value '%v' to 'string'", a)
+			r.WriteString(fmt.Sprintf("%v", a))
+		} else {
+			r.WriteString(b)
 		}
-		r.WriteString(b)
 	}
 	return r.String(), nil
 }
